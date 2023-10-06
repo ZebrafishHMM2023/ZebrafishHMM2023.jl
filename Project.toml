@@ -1,0 +1,7 @@
+name = "ZebrafishHMM2023"
+uuid = "982e605e-fd7d-4c5d-a517-224ed2053a87"
+authors = ["JFdCD <jfdecd@icloud.com>"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.9"

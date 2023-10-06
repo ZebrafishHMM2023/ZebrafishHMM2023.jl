@@ -1,0 +1,8 @@
+*.jl.*.cov
+*.jl.cov
+*.jl.mem
+*.pb.gz
+JuliaSysimage.so
+docs/build/
+docs/site/
+docs/src/literate/*.md

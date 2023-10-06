@@ -1,0 +1,57 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          # The default Julia compat for new packages is v1.9. The setting here should be in sync with that.
+          # I prefer to specify the minor version here (instead of just '1'), so as to be consistent with the
+          # stated compat bound.
+          - '1.9'
+        os:
+          # Ubuntu is the cheapest in terms of CI minutes
+          - ubuntu-latest
+        arch:
+          - x64
+
+    # Note that below, all actions are pinned to their full commit SHA. This is recommended, see:
+    # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions.
+    # I should keep this template file updated with the commit SHA of the latest released version of each action.
+    # In turn, Dependabot helps updating already existing packages.
+    steps:
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+      - uses: julia-actions/setup-julia@f40c4b69330df1d22e7590c12e76dc2f9c66e0bc
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@569d290d51d6c22c1cd4ceec591a1bf112aab9c0
+
+      # Add my registry. Windows complains about '//' unless I specify 'shell: bash' here.
+      - run: julia --color=yes --project=.ci/ -e 'import Pkg; Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/cossio/CossioJuliaRegistry.git"))'
+        shell: bash
+
+      # Setup machine user SSH key
+      - name: Setup SSH Keys and known_hosts
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.KAKIBOT_KEY }}"
+
+      # Install dependencies. Instruct Pkg to use command-line `git`, which is more likely to work
+      # with the SSH key setup above.
+      - uses: julia-actions/julia-buildpkg@00f9fd6b2600be0a8d80566dd4d4d2389b3468eb
+        env:
+          JULIA_PKG_USE_CLI_GIT: true
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+      # Run tests
+      - uses: julia-actions/julia-runtest@79a7e100883947123f8263c5f06e6c0ea3eb972f
