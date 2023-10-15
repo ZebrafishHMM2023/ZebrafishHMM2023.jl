@@ -1,5 +1,7 @@
 module ZebrafishHMM2023
 
-# Write your package code here.
+import HiddenMarkovModels
+
+include("hmm.jl")
 
 end
