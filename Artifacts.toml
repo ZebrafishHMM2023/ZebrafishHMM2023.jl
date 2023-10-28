@@ -1,0 +1,7 @@
+[behaviour_free_swimming]
+git-tree-sha1 = "36323c150fceabea8267d9ef0e064eeda1ea5a3c"
+lazy = true
+
+    [[behaviour_free_swimming.download]]
+    sha256 = "918120b9b138320f3098ef138fd4faeb26fa1f4907109314c7602f99b19c5080"
+    url = "https://gist.github.com/cossio/4207c83a44b0791d826f622c2f7cf8b3/raw/36323c150fceabea8267d9ef0e064eeda1ea5a3c.tar.gz"
