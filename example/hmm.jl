@@ -1,8 +1,9 @@
 using ZebrafishHMM2023: load_behaviour_free_swimming_data, ZebrafishHMM, normalize_all!,
     build_trajectories
-using HiddenMarkovModels: baum_welch, logdensityof
+using HiddenMarkovModels: baum_welch, logdensityof, forward_backward, viterbi
 using Statistics: mean, std
 using Distributions: Normal, Gamma, fit
+using LinearAlgebra
 
 data26 = load_behaviour_free_swimming_data(26)
 
@@ -22,18 +23,16 @@ mean(iszero, skipmissing(data26.dtheta))
 hmm = ZebrafishHMM(
     rand(4),
     rand(4, 4),
-    Normal(0, 30),
-    Gamma(0.6, 30)
+    Normal(0, 10),
+    Gamma(0.6, 50)
 )
 normalize_all!(hmm)
 
 (hmm, lL) = baum_welch(
     hmm, all_trajs, length(all_trajs);
-    max_iterations = 100
+    max_iterations = 500
 )
 lL
-
-logdensityof(hmm, all_trajs, length(all_trajs))
 
 hmm.forw
 hmm.turn
@@ -43,3 +42,9 @@ mean(hmm.turn), std(hmm.turn)
 
 hmm.transition_matrix
 hmm.initial_probs
+
+eigvals(hmm.transition_matrix')
+eigvecs(hmm.transition_matrix')[:,4] / sum(eigvecs(hmm.transition_matrix')[:,4])
+
+
+viterbi(hmm, all_trajs, length(all_trajs))

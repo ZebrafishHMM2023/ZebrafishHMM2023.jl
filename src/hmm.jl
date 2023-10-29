@@ -7,7 +7,7 @@ mutable struct ZebrafishHMM <: HiddenMarkovModels.AbstractHMM
         4. Right (right turning bouts)
     =#
     const initial_probs::Vector{Float64}
-    const transition_matrix::Matrix{Float64} # T[i,j] is the probability of transitions i -> j
+    const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
     forw::Normal{Float64}
     turn::Gamma{Float64}
 end
@@ -73,7 +73,9 @@ function StatsAPI.fit!(hmm::ZebrafishHMM, init_count, trans_count, obs_seq, stat
     normalize_transition_matrix!(hmm)
 
     #= Update forward emission probabilities =#
-    forw_obs, forw_marginals = filter_obs(!ismissing, obs_seq, state_marginals[1,:] + state_marginals[2,:])
+    forw_obs, forw_marginals = filter_obs(
+        !ismissing, obs_seq, state_marginals[1,:] + state_marginals[2,:]
+    )
     forw = fit(typeof(hmm.forw), forw_obs, forw_marginals)
 
     # forward angles are always centered at 0, so we only use the fitted σ, discarding μ
