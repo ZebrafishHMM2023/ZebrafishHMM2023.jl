@@ -1,6 +1,6 @@
 using ZebrafishHMM2023: load_behaviour_free_swimming_data, ZebrafishHMM, normalize_all!,
-    build_trajectories, logdensityof
-using HiddenMarkovModels: baum_welch
+    build_trajectories
+using HiddenMarkovModels: baum_welch, logdensityof
 using Statistics: mean, std
 using Distributions: Normal, Gamma, fit
 
@@ -32,6 +32,8 @@ normalize_all!(hmm)
     max_iterations = 100
 )
 lL
+
+logdensityof(hmm, all_trajs, length(all_trajs))
 
 hmm.forw
 hmm.turn

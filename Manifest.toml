@@ -2,7 +2,7 @@
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "505373a25e75025d7712e23642a2075db6a4811f"
+project_hash = "8e3018a212575f8c157614eebbdba7b5e08e8d74"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -127,19 +127,15 @@ uuid = "0234f1f7-429e-5d53-9886-15a909be8d59"
 version = "1.14.2+1"
 
 [[deps.HiddenMarkovModels]]
-deps = ["DensityInterface", "Distributions", "LinearAlgebra", "PrecompileTools", "Random", "RequiredInterfaces", "Requires", "SimpleUnPack", "StatsAPI"]
-git-tree-sha1 = "7d732ee3f690f739d039d4ff694803152b88e95a"
-repo-rev = "v0.3.0"
-repo-url = "https://github.com/gdalle/HiddenMarkovModels.jl.git"
+deps = ["ChainRulesCore", "DensityInterface", "Distributions", "LinearAlgebra", "PrecompileTools", "Random", "RequiredInterfaces", "Requires", "SimpleUnPack", "StatsAPI"]
+git-tree-sha1 = "51cad06bee7a309bbe125ea3c31f947ab0b75613"
 uuid = "84ca31d5-effc-45e0-bfda-5a68cd981f47"
-version = "0.3.0"
+version = "0.2.2"
 
     [deps.HiddenMarkovModels.extensions]
-    HiddenMarkovModelsChainRulesCoreExt = "ChainRulesCore"
     HiddenMarkovModelsHMMBaseExt = "HMMBase"
 
     [deps.HiddenMarkovModels.weakdeps]
-    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
     HMMBase = "b2b3ca75-8444-5ffa-85e6-af70e2b64fe7"
 
 [[deps.HypergeometricFunctions]]

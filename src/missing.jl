@@ -11,5 +11,5 @@ function DensityInterface.logdensityof(d::DistributionMissingWrapper, x::Float64
 end
 
 function DensityInterface.logdensityof(::DistributionMissingWrapper, ::Missing)
-    return 1.0
+    return 0.0
 end
