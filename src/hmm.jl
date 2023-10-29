@@ -44,8 +44,8 @@ end
 
 function normalize_transition_matrix!(hmm::ZebrafishHMM)
     # forbidden transitions
-    hmm.transition_matrix[3,1] = 0 # left -> forward-right is forbidden
-    hmm.transition_matrix[4,2] = 0 # right -> forward-left is forbidden
+    hmm.transition_matrix[3,2] = 0 # left -> forward-right is forbidden
+    hmm.transition_matrix[4,1] = 0 # right -> forward-left is forbidden
     hmm.transition_matrix[1,2] = 0 # forward-left -> forward-right is forbidden
     hmm.transition_matrix[2,1] = 0 # forward-right -> forward-left is forbidden
 

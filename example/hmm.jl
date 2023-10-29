@@ -6,12 +6,9 @@ using Distributions: Normal, Gamma, fit
 
 data26 = load_behaviour_free_swimming_data(26)
 
-# zero values give Infinities with Gamma. There are very few 0's, so I'll just replace them by `missing`
+#= zero values give Infinities with Gamma.
+There are very few 0's, so I'll just replace them by `missing` =#
 all_trajs = collect(eachcol(replace(data26.dtheta, NaN => missing, 0 => missing)))
-
-
-# all_trajs = build_trajectories(data26.dtheta)
-# all_trajs = [[iszero(x) ? randn() / 1e5 : x for x = t] for t = all_trajs]
 
 # use these parameter fits to init the emission distributions
 fit(Normal, collect(skipmissing(reduce(vcat, all_trajs))))
@@ -25,14 +22,14 @@ mean(iszero, skipmissing(data26.dtheta))
 hmm = ZebrafishHMM(
     rand(4),
     rand(4, 4),
-    Normal(0, 10),
-    Gamma(0.6, 10)
+    Normal(0, 30),
+    Gamma(0.6, 30)
 )
 normalize_all!(hmm)
 
 (hmm, lL) = baum_welch(
     hmm, all_trajs, length(all_trajs);
-    max_iterations = 500
+    max_iterations = 100
 )
 lL
 
