@@ -1,3 +1,5 @@
+#= A distribution that treats missing data as Pdist(missing) = 1, at inference time,
+with the goal of to marginalizing over the missing data points. =#
 struct DistributionMissingWrapper{D}
     dist::D
 end
