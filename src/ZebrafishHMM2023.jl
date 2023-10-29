@@ -7,7 +7,6 @@ using LazyArtifacts: LazyArtifacts, @artifact_str
 using HDF5: h5open, attrs
 using Distributions: Normal, Gamma, AffineDistribution
 using StatsAPI: fit
-using NegativeGammaDistributions: NegativeGamma
 using DensityInterface: logdensityof
 using Random: AbstractRNG
 

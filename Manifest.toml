@@ -2,7 +2,7 @@
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "8e3018a212575f8c157614eebbdba7b5e08e8d74"
+project_hash = "cba29d21bd7140244c0cc6c220ca1827fcaf8801"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -271,12 +271,6 @@ deps = ["OpenLibm_jll"]
 git-tree-sha1 = "0877504529a3e5c3343c6f8b4c0381e57e4387e4"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "1.0.2"
-
-[[deps.NegativeGammaDistributions]]
-deps = ["Distributions", "Random", "Statistics", "StatsAPI", "StatsBase"]
-git-tree-sha1 = "99d3c3cc64ac27536194586df90ef70170824299"
-uuid = "d015f569-cd2a-4d71-b962-240f6358815c"
-version = "1.0.1"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"

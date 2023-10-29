@@ -11,7 +11,7 @@ function SignedGamma(α::Real, θ::Real; positive::Bool)
     return SignedGamma(Gamma(α, θ); positive)
 end
 
-function Base.rand(r::AbstractRNG, d::NegativeGamma)
+function Base.rand(r::AbstractRNG, d::SignedGamma)
     if d.positive
         return rand(r, d.gamma)
     else
