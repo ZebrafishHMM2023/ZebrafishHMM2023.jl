@@ -1,7 +1,7 @@
 name = "ZebrafishHMM2023"
 uuid = "982e605e-fd7d-4c5d-a517-224ed2053a87"
 authors = ["JFdCD <jfdecd@icloud.com>"]
-version = "3.0.0"
+version = "3.0.1"
 
 [deps]
 DensityInterface = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
@@ -17,7 +17,7 @@ StatsAPI = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
 DensityInterface = "0.4"
 Distributions = "0.25"
 HDF5 = "0.17"
-HiddenMarkovModels = "0.2"
+HiddenMarkovModels = "0.2,0.3"
 LazyArtifacts = "1"
 Random = "1"
 Statistics = "1"
