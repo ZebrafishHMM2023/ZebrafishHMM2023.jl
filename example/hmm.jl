@@ -1,5 +1,5 @@
 using ZebrafishHMM2023: load_behaviour_free_swimming_data, ZebrafishHMM, normalize_all!,
-    build_trajectories
+    build_trajectories, ZebrafishHMM_FLR
 using HiddenMarkovModels: baum_welch, logdensityof, forward_backward, viterbi
 using Statistics: mean, std
 using Distributions: Normal, Gamma, fit
@@ -48,3 +48,20 @@ eigvecs(hmm.transition_matrix')[:,4] / sum(eigvecs(hmm.transition_matrix')[:,4])
 
 
 viterbi(hmm, all_trajs, length(all_trajs))
+
+
+#= FLR model =#
+
+hmm_flr = ZebrafishHMM_FLR(
+    rand(3),
+    rand(3, 3),
+    Normal(0, 10),
+    Gamma(0.6, 50)
+)
+normalize_all!(hmm_flr)
+(hmm_flr, lL_flr) = baum_welch(
+    hmm_flr, all_trajs, length(all_trajs);
+    max_iterations = 200
+)
+lL[200]
+lL_flr[end]

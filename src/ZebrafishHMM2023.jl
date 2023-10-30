@@ -15,4 +15,6 @@ include("missing.jl")
 include("hmm.jl")
 include("data.jl")
 
+include("models/hmm_flr.jl")
+
 end

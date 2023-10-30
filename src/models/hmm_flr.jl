@@ -1,10 +1,10 @@
-mutable struct ZebrafishHMM <: HiddenMarkovModels.AbstractHMM
+mutable struct ZebrafishHMM_FLR <: HiddenMarkovModels.AbstractHMM
     #=
-    states are stored in this order:
-        1. Forward-Left (forward bouts, but last turn was left)
-        2. Forward-Right (forward bouts, but last turn was right)
+    States are stored in this order:
+        1. Forward (forward bouts)
         3. Left (left turning bouts)
         4. Right (right turning bouts)
+    In contrast to ZebrafishHMM, Forward bouts have no memory of the last turning direction.
     =#
     const initial_probs::Vector{Float64}
     const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
@@ -13,42 +13,36 @@ mutable struct ZebrafishHMM <: HiddenMarkovModels.AbstractHMM
 end
 
 # number of hidden states
-Base.length(hmm::ZebrafishHMM) = 4
+Base.length(hmm::ZebrafishHMM_FLR) = 3
 
-function HiddenMarkovModels.transition_matrix(hmm::ZebrafishHMM)
+function HiddenMarkovModels.transition_matrix(hmm::ZebrafishHMM_FLR)
     return hmm.transition_matrix
 end
 
-function HiddenMarkovModels.initial_distribution(hmm::ZebrafishHMM)
+function HiddenMarkovModels.initial_distribution(hmm::ZebrafishHMM_FLR)
     return hmm.initial_probs
 end
 
-function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM, i::Int)
-    if i ∈ (1, 2) # forward-left, forward-right
+function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_FLR, i::Int)
+    if i == 1 # forward
         dist = hmm.forw
-    elseif i == 3 # left
+    elseif i == 2 # left
         dist = AffineDistribution(0, -1, hmm.turn)
-    elseif i == 4 # right
+    elseif i == 3 # right
         dist = hmm.turn
     else
-        throw(ArgumentError("State index must be 1, 2, 3, or 4; got $i"))
+        throw(ArgumentError("State index must be 1, 2, or 3; got $i"))
     end
 
     return DistributionMissingWrapper(dist)
 end
 
-function normalize_initial_probs!(hmm::ZebrafishHMM)
+function normalize_initial_probs!(hmm::ZebrafishHMM_FLR)
     hmm.initial_probs .= hmm.initial_probs ./ sum(hmm.initial_probs)
     return hmm.initial_probs
 end
 
-function normalize_transition_matrix!(hmm::ZebrafishHMM)
-    # forbidden transitions
-    hmm.transition_matrix[3,2] = 0 # forbid left -> forward-right
-    hmm.transition_matrix[4,1] = 0 # forbid right -> forward-left
-    hmm.transition_matrix[1,2] = 0 # forbid forward-left -> forward-right
-    hmm.transition_matrix[2,1] = 0 # forbid forward-right -> forward-left
-
+function normalize_transition_matrix!(hmm::ZebrafishHMM_FLR)
     # TODO: impose left / right symmetry ?
 
     # normalize transition matrix
@@ -57,13 +51,13 @@ function normalize_transition_matrix!(hmm::ZebrafishHMM)
     return hmm.transition_matrix
 end
 
-function normalize_all!(hmm::ZebrafishHMM)
+function normalize_all!(hmm::ZebrafishHMM_FLR)
     normalize_initial_probs!(hmm)
     normalize_transition_matrix!(hmm)
     return hmm
 end
 
-function StatsAPI.fit!(hmm::ZebrafishHMM, init_count, trans_count, obs_seq, state_marginals)
+function StatsAPI.fit!(hmm::ZebrafishHMM_FLR, init_count, trans_count, obs_seq, state_marginals)
     #= Update initial state probabilities =#
     hmm.initial_probs .= init_count
     normalize_initial_probs!(hmm)
@@ -73,9 +67,7 @@ function StatsAPI.fit!(hmm::ZebrafishHMM, init_count, trans_count, obs_seq, stat
     normalize_transition_matrix!(hmm)
 
     #= Update forward emission probabilities =#
-    forw_obs, forw_marginals = filter_obs(
-        !ismissing, obs_seq, state_marginals[1,:] + state_marginals[2,:]
-    )
+    forw_obs, forw_marginals = filter_obs(!ismissing, obs_seq, state_marginals[1,:])
     forw = fit(typeof(hmm.forw), forw_obs, forw_marginals)
 
     # forward angles are always centered at 0, so we only use the fitted σ, discarding μ
@@ -86,12 +78,7 @@ function StatsAPI.fit!(hmm::ZebrafishHMM, init_count, trans_count, obs_seq, stat
     turn_obs, turn_marginals = filter_obs(
         x -> !ismissing(x) && x > 0,
         [-obs_seq; obs_seq],
-        [state_marginals[3,:]; state_marginals[4,:]]
+        [state_marginals[2,:]; state_marginals[3,:]]
     )
     hmm.turn = fit(typeof(hmm.turn), turn_obs, turn_marginals)
-end
-
-function filter_obs(cond, obs_seq::AbstractVector, state_marginals::AbstractVector)
-    _idx = findall(cond, obs_seq)
-    return map(identity, obs_seq[_idx]), map(identity, state_marginals[_idx])
 end
