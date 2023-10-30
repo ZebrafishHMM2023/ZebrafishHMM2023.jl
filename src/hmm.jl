@@ -10,10 +10,20 @@ mutable struct ZebrafishHMM <: HiddenMarkovModels.AbstractHMM
     const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
     forw::Normal{Float64}
     turn::Gamma{Float64}
+
+    function ZebrafishHMM(
+        initial_probs::AbstractVector{<:Real},
+        transition_matrix::AbstractMatrix{<:Real},
+        forw::Normal{<:Real}, turn::Gamma{<:Real}
+    )
+        length(initial_probs) == 4 || throw(ArgumentError("initial_probs should have 4 elements"))
+        size(transition_matrix) == (4, 4) || throw(ArgumentError("transition_matrix should be 4x4"))
+        return new(initial_probs, transition_matrix, forw, turn)
+    end
 end
 
 # number of hidden states
-Base.length(hmm::ZebrafishHMM) = 4
+Base.length(hmm::ZebrafishHMM) = length(hmm.initial_probs)
 
 function HiddenMarkovModels.transition_matrix(hmm::ZebrafishHMM)
     return hmm.transition_matrix
