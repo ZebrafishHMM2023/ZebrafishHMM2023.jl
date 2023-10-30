@@ -61,7 +61,7 @@ hmm_flr = ZebrafishHMM_FLR(
 normalize_all!(hmm_flr)
 (hmm_flr, lL_flr) = baum_welch(
     hmm_flr, all_trajs, length(all_trajs);
-    max_iterations = 200
+    max_iterations = 500
 )
-lL[200]
+lL[end]
 lL_flr[end]

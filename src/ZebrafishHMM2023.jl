@@ -14,6 +14,7 @@ include("artifacts.jl")
 include("missing.jl")
 include("hmm.jl")
 include("data.jl")
+include("util.jl")
 
 include("models/hmm_flr.jl")
 
