@@ -1,7 +1,7 @@
 name = "ZebrafishHMM2023"
 uuid = "982e605e-fd7d-4c5d-a517-224ed2053a87"
 authors = ["JFdCD <jfdecd@icloud.com>"]
-version = "3.1.0"
+version = "3.1.1-DEV"
 
 [deps]
 DensityInterface = "b429d917-457f-4dbc-8f4c-0cc954292b1d"

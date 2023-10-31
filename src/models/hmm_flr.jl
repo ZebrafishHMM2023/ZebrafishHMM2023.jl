@@ -2,8 +2,8 @@ mutable struct ZebrafishHMM_FLR <: HiddenMarkovModels.AbstractHMM
     #=
     States are stored in this order:
         1. Forward (forward bouts)
-        3. Left (left turning bouts)
-        4. Right (right turning bouts)
+        2. Left (left turning bouts)
+        3. Right (right turning bouts)
     In contrast to ZebrafishHMM, Forward bouts have no memory of the last turning direction.
     =#
     const initial_probs::Vector{Float64}
