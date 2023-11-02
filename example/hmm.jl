@@ -1,35 +1,42 @@
-using ZebrafishHMM2023: load_behaviour_free_swimming_data, ZebrafishHMM, normalize_all!,
-    build_trajectories, ZebrafishHMM_FLR
+using ZebrafishHMM2023: load_behaviour_free_swimming_data, normalize_all!, load_behaviour_free_swimming_trajs,
+    ZebrafishHMM_G3, ZebrafishHMM_G4, ZebrafishHMM_TN03, ZebrafishHMM_TN04,
+    ZebrafishHMM_TN3, ZebrafishHMM_TN4
 using HiddenMarkovModels: baum_welch, logdensityof, forward_backward, viterbi
 using Statistics: mean, std
-using Distributions: Normal, Gamma, fit
+using Distributions: Normal, Gamma, fit_mle
 using LinearAlgebra
 
-data26 = load_behaviour_free_swimming_data(26)
+#= Load trajectories. =#
+trajs26 = load_behaviour_free_swimming_trajs(26)
 
-#= zero values give Infinities with Gamma.
-There are very few 0's, so I'll just replace them by `missing` =#
-all_trajs = collect(eachcol(replace(data26.dtheta, NaN => missing, 0 => missing)))
+#= Zero values give trouble with Gamma.
+There are only 3 trajectories with a zero, so I'll just filter those out. =#
+#trajs26 = filter(traj -> all(!iszero, traj), trajs26)
 
 # use these parameter fits to init the emission distributions
-fit(Normal, collect(skipmissing(reduce(vcat, all_trajs))))
-fit(Gamma, +filter(>(0), skipmissing(reduce(vcat, all_trajs))))
-fit(Gamma, -filter(<(0), skipmissing(reduce(vcat, all_trajs))))
+fit_mle(Normal, reduce(vcat, trajs26); mu = 0.0)
+fit_mle(Gamma, +filter(>(0), reduce(vcat, trajs26)))
+fit_mle(Gamma, -filter(<(0), reduce(vcat, trajs26)))
 
-mean(>(0), skipmissing(data26.dtheta))
-mean(<(0), skipmissing(data26.dtheta))
-mean(iszero, skipmissing(data26.dtheta))
+# use these parameter fits to init the emission distributions
+fit_mle(Normal, reduce(vcat, trajs26); mu = 0.0)
+fit_mle(Gamma, +filter(>(0), reduce(vcat, trajs26)))
+fit_mle(Gamma, -filter(<(0), reduce(vcat, trajs26)))
 
-hmm = ZebrafishHMM(
-    rand(4),
-    rand(4, 4),
+mean(>(0), reduce(vcat, trajs26))
+mean(<(0), reduce(vcat, trajs26))
+mean(iszero, reduce(vcat, trajs26))
+
+hmm = ZebrafishHMM_G3(
+    rand(3),
+    rand(3,3),
     Normal(0, 10),
-    Gamma(0.6, 50)
+    Gamma(0.6, 32)
 )
 normalize_all!(hmm)
 
 (hmm, lL) = baum_welch(
-    hmm, all_trajs, length(all_trajs);
+    hmm, trajs26, length(trajs26);
     max_iterations = 500
 )
 lL
@@ -43,25 +50,4 @@ mean(hmm.turn), std(hmm.turn)
 hmm.transition_matrix
 hmm.initial_probs
 
-eigvals(hmm.transition_matrix')
-eigvecs(hmm.transition_matrix')[:,4] / sum(eigvecs(hmm.transition_matrix')[:,4])
-
-
-viterbi(hmm, all_trajs, length(all_trajs))
-
-
-#= FLR model =#
-
-hmm_flr = ZebrafishHMM_FLR(
-    rand(3),
-    rand(3, 3),
-    Normal(0, 10),
-    Gamma(0.6, 50)
-)
-normalize_all!(hmm_flr)
-(hmm_flr, lL_flr) = baum_welch(
-    hmm_flr, all_trajs, length(all_trajs);
-    max_iterations = 500
-)
-lL[end]
-lL_flr[end]
+viterbi(hmm, trajs26, length(trajs26))

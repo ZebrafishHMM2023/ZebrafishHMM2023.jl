@@ -3,6 +3,10 @@ function behaviour_free_swimming_hdf5_path()
     return joinpath(artifact"behaviour_free_swimming", "behaviour_free_swimming.h5")
 end
 
+function behaviour_free_swimming_temperatures()
+    return (18, 22, 26, 30, 33)
+end
+
 function load_behaviour_free_swimming_data(temperature::Int)
     if temperature ∉ (18, 22, 26, 30, 33)
         throw(ArgumentError("temperature must be one of 18, 22, 26, 30, 33; got $temperature"))

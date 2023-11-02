@@ -1,17 +1,17 @@
-mutable struct ZebrafishHMM_FLR <: HiddenMarkovModels.AbstractHMM
+mutable struct ZebrafishHMM_G3 <: HiddenMarkovModels.AbstractHMM
     #=
     States are stored in this order:
         1. Forward (forward bouts)
         2. Left (left turning bouts)
         3. Right (right turning bouts)
-    In contrast to ZebrafishHMM, Forward bouts have no memory of the last turning direction.
+    In contrast to ZebrafishHMM_G4, Forward bouts have no memory of the last turning direction.
     =#
     const initial_probs::Vector{Float64}
     const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
     forw::Normal{Float64}
     turn::Gamma{Float64}
 
-    function ZebrafishHMM_FLR(
+    function ZebrafishHMM_G3(
         initial_probs::AbstractVector{<:Real},
         transition_matrix::AbstractMatrix{<:Real},
         forw::Normal{<:Real}, turn::Gamma{<:Real}
@@ -23,17 +23,17 @@ mutable struct ZebrafishHMM_FLR <: HiddenMarkovModels.AbstractHMM
 end
 
 # number of hidden states
-Base.length(hmm::ZebrafishHMM_FLR) = length(hmm.initial_probs)
+Base.length(hmm::ZebrafishHMM_G3) = length(hmm.initial_probs)
 
-function HiddenMarkovModels.transition_matrix(hmm::ZebrafishHMM_FLR)
+function HiddenMarkovModels.transition_matrix(hmm::ZebrafishHMM_G3)
     return hmm.transition_matrix
 end
 
-function HiddenMarkovModels.initial_distribution(hmm::ZebrafishHMM_FLR)
+function HiddenMarkovModels.initial_distribution(hmm::ZebrafishHMM_G3)
     return hmm.initial_probs
 end
 
-function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_FLR, i::Int)
+function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_G3, i::Int)
     if i == 1 # forward
         dist = hmm.forw
     elseif i == 2 # left
@@ -44,15 +44,15 @@ function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_FLR, i::Int)
         throw(ArgumentError("State index must be 1, 2, or 3; got $i"))
     end
 
-    return DistributionMissingWrapper(dist)
+    return dist
 end
 
-function normalize_initial_probs!(hmm::ZebrafishHMM_FLR)
+function normalize_initial_probs!(hmm::ZebrafishHMM_G3)
     hmm.initial_probs .= hmm.initial_probs ./ sum(hmm.initial_probs)
     return hmm.initial_probs
 end
 
-function normalize_transition_matrix!(hmm::ZebrafishHMM_FLR)
+function normalize_transition_matrix!(hmm::ZebrafishHMM_G3)
     # TODO: impose left / right symmetry ?
 
     # normalize transition matrix
@@ -61,13 +61,13 @@ function normalize_transition_matrix!(hmm::ZebrafishHMM_FLR)
     return hmm.transition_matrix
 end
 
-function normalize_all!(hmm::ZebrafishHMM_FLR)
+function normalize_all!(hmm::ZebrafishHMM_G3)
     normalize_initial_probs!(hmm)
     normalize_transition_matrix!(hmm)
     return hmm
 end
 
-function StatsAPI.fit!(hmm::ZebrafishHMM_FLR, init_count, trans_count, obs_seq, state_marginals)
+function StatsAPI.fit!(hmm::ZebrafishHMM_G3, init_count, trans_count, obs_seq, state_marginals)
     #= Update initial state probabilities =#
     hmm.initial_probs .= init_count
     normalize_initial_probs!(hmm)
@@ -76,19 +76,10 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_FLR, init_count, trans_count, obs_seq, 
     hmm.transition_matrix .= trans_count
     normalize_transition_matrix!(hmm)
 
-    #= Update forward emission probabilities =#
-    forw_obs, forw_marginals = filter_obs(!ismissing, obs_seq, state_marginals[1,:])
-    forw = fit(typeof(hmm.forw), forw_obs, forw_marginals)
+    #= Update forward emission probabilities. Forward angles are always centered at μ = 0 =#
+    hmm.forw = fit_mle(typeof(hmm.forw), obs_seq, state_marginals[1,:]; mu = 0.0)
 
-    # forward angles are always centered at 0, so we only use the fitted σ, discarding μ
-    hmm.forw = Normal(0, forw.σ)
-
-    #= Update left-right turn emission probabilities =#
-    # discard negative and missing entries, since they could not have been emitted by turning states
-    turn_obs, turn_marginals = filter_obs(
-        x -> !ismissing(x) && x > 0,
-        [-obs_seq; obs_seq],
-        [state_marginals[2,:]; state_marginals[3,:]]
-    )
-    hmm.turn = fit(typeof(hmm.turn), turn_obs, turn_marginals)
+    #= Update left-right turn emission probabilities. =#
+    turn_marginals = ifelse.(obs_seq .< 0, state_marginals[2,:], state_marginals[3,:])
+    hmm.turn = fit_mle(typeof(hmm.turn), abs.(obs_seq), turn_marginals)
 end
