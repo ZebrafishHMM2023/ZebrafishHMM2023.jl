@@ -87,3 +87,24 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_TN3, init_count, trans_count, obs_seq, 
     μ, σ = half_normal_fit(S1, S2)
     hmm.turn = Normal(μ, σ)
 end
+
+function save_hmm(path::AbstractString, hmm::ZebrafishHMM_TN3)
+    h5open(path, "w") do h5
+        write(h5, "type", "ZebrafishHMM_TN3")
+        write(h5, "initial_probs", hmm.initial_probs)
+        write(h5, "transition_matrix", hmm.transition_matrix)
+        write(h5, "forw", collect(params(hmm.forw)))
+        write(h5, "turn", collect(params(hmm.turn)))
+    end
+end
+
+function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_TN3})
+    h5open(path, "r") do h5
+        read(h5, "type") == "ZebrafishHMM_TN3" || throw(ArgumentError("HMM type missmatch"))
+        initial_probs = read(h5, "initial_probs")
+        transition_matrix = read(h5, "transition_matrix")
+        forw_params = read(h5, "forw")
+        turn_params = read(h5, "turn")
+        return ZebrafishHMM_TN3(initial_probs, transition_matrix, Normal(forw_params...), Normal(turn_params...))
+    end
+end

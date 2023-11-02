@@ -8,7 +8,7 @@ import OptimizationOptimJL
 import Optim
 using LazyArtifacts: LazyArtifacts, @artifact_str
 using HDF5: h5open, attrs
-using Distributions: Normal, Gamma, AffineDistribution, truncated, fit_mle
+using Distributions: Normal, Gamma, AffineDistribution, truncated, fit_mle, params
 using StatsAPI: fit
 using DensityInterface: logdensityof
 using Random: AbstractRNG

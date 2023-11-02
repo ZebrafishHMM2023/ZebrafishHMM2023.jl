@@ -89,3 +89,24 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_G4, init_count, trans_count, obs_seq, s
     turn_marginals = ifelse.(obs_seq .< 0, state_marginals[3,:], state_marginals[4,:])
     hmm.turn = fit_mle(typeof(hmm.turn), abs.(obs_seq), turn_marginals)
 end
+
+function save_hmm(path::AbstractString, hmm::ZebrafishHMM_G4)
+    h5open(path, "w") do h5
+        write(h5, "type", "ZebrafishHMM_G4")
+        write(h5, "initial_probs", hmm.initial_probs)
+        write(h5, "transition_matrix", hmm.transition_matrix)
+        write(h5, "forw", collect(params(hmm.forw)))
+        write(h5, "turn", collect(params(hmm.turn)))
+    end
+end
+
+function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_G4})
+    h5open(path, "r") do h5
+        read(h5, "type") == "ZebrafishHMM_G4" || throw(ArgumentError("HMM type missmatch"))
+        initial_probs = read(h5, "initial_probs")
+        transition_matrix = read(h5, "transition_matrix")
+        forw_params = read(h5, "forw")
+        turn_params = read(h5, "turn")
+        return ZebrafishHMM_G4(initial_probs, transition_matrix, Normal(forw_params...), Gamma(turn_params...))
+    end
+end

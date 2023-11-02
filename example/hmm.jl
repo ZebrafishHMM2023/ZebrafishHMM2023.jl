@@ -11,7 +11,7 @@ trajs26 = load_behaviour_free_swimming_trajs(26)
 
 #= Zero values give trouble with Gamma.
 There are only 3 trajectories with a zero, so I'll just filter those out. =#
-#trajs26 = filter(traj -> all(!iszero, traj), trajs26)
+trajs26 = filter(traj -> all(!iszero, traj), trajs26)
 
 # use these parameter fits to init the emission distributions
 fit_mle(Normal, reduce(vcat, trajs26); mu = 0.0)
@@ -40,6 +40,8 @@ normalize_all!(hmm)
     max_iterations = 500
 )
 lL
+
+logdensityof(hmm, trajs26, length(trajs26))
 
 hmm.forw
 hmm.turn
