@@ -14,11 +14,11 @@ mutable struct ZebrafishHMM_TN03 <: HiddenMarkovModels.AbstractHMM
     function ZebrafishHMM_TN03(
         initial_probs::AbstractVector{<:Real},
         transition_matrix::AbstractMatrix{<:Real},
-        forw::Normal{<:Real},
-        turn::Normal{<:Real}
+        forw::Normal{<:Real}, turn::Normal{<:Real}
     )
         length(initial_probs) == 3 || throw(ArgumentError("initial_probs should have 3 elements"))
         size(transition_matrix) == (3, 3) || throw(ArgumentError("transition_matrix should be 3x3"))
+        iszero(mean(turn)) || throw(ArgumentError("turn should have zero mean"))
         return new(initial_probs, transition_matrix, forw, turn)
     end
 end

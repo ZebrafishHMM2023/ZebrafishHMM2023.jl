@@ -40,7 +40,7 @@ function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_TN3, i::Int)
     elseif i == 2 # left
         dist = truncated(Normal(-mean(hmm.turn), std(hmm.turn)), nothing, 0)
     elseif i == 3 # right
-        dist = truncated(hmm.turn, 0, nothing)
+        dist = truncated(Normal(+mean(hmm.turn), std(hmm.turn)), 0, nothing)
     else
         throw(ArgumentError("State index must be 1, 2, or 3; got $i"))
     end
@@ -81,6 +81,9 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_TN3, init_count, trans_count, obs_seq, 
     hmm.forw = fit_mle(typeof(hmm.forw), obs_seq, state_marginals[1,:]; mu = 0.0)
 
     #= Update left-right turn emission probabilities =#
+    @assert iszero(state_marginals[2, findall(obs_seq .> 0)])
+    @assert iszero(state_marginals[3, findall(obs_seq .< 0)])
+
     turn_marginals = ifelse.(obs_seq .< 0, state_marginals[2,:], state_marginals[3,:])
     S1 = mean(turn_marginals .* abs.(obs_seq)) / mean(turn_marginals)
     S2 = mean(turn_marginals .* abs2.(obs_seq)) / mean(turn_marginals)

@@ -18,6 +18,7 @@ mutable struct ZebrafishHMM_TN04 <: HiddenMarkovModels.AbstractHMM
     )
         length(initial_probs) == 4 || throw(ArgumentError("initial_probs should have 4 elements"))
         size(transition_matrix) == (4, 4) || throw(ArgumentError("transition_matrix should be 4x4"))
+        iszero(mean(turn)) || throw(ArgumentError("turn should have zero mean"))
         return new(initial_probs, transition_matrix, forw, turn)
     end
 end

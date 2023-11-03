@@ -13,7 +13,7 @@ using StatsAPI: fit
 using DensityInterface: logdensityof
 using Random: AbstractRNG
 using Statistics: mean, std
-using SpecialFunctions: logerfcx
+using SpecialFunctions: logerfcx, erfcx
 
 include("artifacts.jl")
 include("missing.jl")
