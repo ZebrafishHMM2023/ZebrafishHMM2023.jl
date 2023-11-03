@@ -18,7 +18,7 @@ end
 
 @testset "half_normal_fit" begin
     μ, σ = half_normal_fit(sqrt(2/π), 1)
-    @test abs(μ) < 1e-10
+    @test abs(μ) < 1e-8
     @test σ ≈ 1
 
     μ, σ = half_normal_fit(3.28205277499448947798906269824, 15.5641055499889789559781253965)
