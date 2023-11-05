@@ -14,12 +14,15 @@ using DensityInterface: logdensityof
 using Random: AbstractRNG
 using Statistics: mean, std
 using SpecialFunctions: logerfcx, erfcx
+using DampedUpdates: damp
+using LinearAlgebra: eigvecs
 
 include("artifacts.jl")
 include("missing.jl")
 include("data.jl")
 include("util.jl")
 include("truncated_normal.jl")
+include("hmm.jl")
 
 include("models/gamma/hmm_g3.jl")
 include("models/gamma/hmm_g4.jl")

@@ -47,18 +47,22 @@ function half_normal_loglikelihood(a::Real, b::Real, S1::Real, S2::Real)
     return 1/2 * log(2/π) + log(b) - logerfcx(-a / √2) + a * b * S1 - b^2 * S2 / 2
 end
 
-function half_normal_fit_iter(S1::Real, S2::Real; maxiter = 1000, atol = 1e-6, rtol = 1e-6)
+function half_normal_fit_iter(S1::Real, S2::Real; maxiter = 1000, atol = 1e-6, rtol = 1e-6, damping = 1e-3)
     S1 > 0 && S2 > 0 || throw(ArgumentError("S1 and S2 must be positive"))
-    μ = S1
+    μ = 0.01S1
     σ = sqrt(S2)
+
     for iter = 1:maxiter
-        σ_new = S1 / half_normal_psi(μ / σ)
-        μ_new = (S2 - σ_new^2) / S1
+        r = μ / σ
+        y = r * half_normal_psi(r) # μ/σ * S1/σ
+
+        σ_new = sqrt(S2 / (1 + y))
+        μ_new = r * σ_new
 
         converged = isapprox(σ_new, σ; atol, rtol) && isapprox(μ_new, μ; atol, rtol)
 
-        μ = μ_new
-        σ = σ_new
+        μ = damp(μ_new, μ; damping)
+        σ = damp(σ_new, σ; damping)
 
         println("μ=$μ, σ=$σ")
 
@@ -66,6 +70,8 @@ function half_normal_fit_iter(S1::Real, S2::Real; maxiter = 1000, atol = 1e-6, r
             return (μ, σ)
         end
     end
+
+    @warn "Maximum number of iterations ($maxiter) reached"
     return nothing
 end
 

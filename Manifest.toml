@@ -2,7 +2,7 @@
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "c55db78043e068d941b58e87ad7acf203b4a3b8c"
+project_hash = "b4b3fceb6871b7e75eade6a5963e576d94cd6df5"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "5d2e21d7b0d8c22f67483ef95ebdc39c0e6b6003"
@@ -119,6 +119,11 @@ version = "1.5.4"
     [deps.ConstructionBase.weakdeps]
     IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
     StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
+[[deps.DampedUpdates]]
+git-tree-sha1 = "4200263e40ebbdf258e3e4c4044c2b678bb89c89"
+uuid = "c1d5de99-3441-47e2-85af-8ce5ee9923a2"
+version = "1.0.0"
 
 [[deps.DataAPI]]
 git-tree-sha1 = "8da84edb865b0b5b0100c0666a9bc9a0b71c553c"
