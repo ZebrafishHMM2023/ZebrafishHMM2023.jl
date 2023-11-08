@@ -7,6 +7,3 @@ function filter_obs(cond, obs_seq::AbstractVector, state_marginals::AbstractVect
     _idx = findall(cond, obs_seq)
     return map(identity, obs_seq[_idx]), map(identity, state_marginals[_idx])
 end
-
-# function stubborness_factor()
-# end

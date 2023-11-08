@@ -110,3 +110,18 @@ function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_G4})
         return ZebrafishHMM_G4(initial_probs, transition_matrix, Normal(forw_params...), Gamma(turn_params...))
     end
 end
+
+function stubborness_factor(hmm::ZebrafishHMM_G4, q::Int)
+    T = HiddenMarkovModels.transition_matrix(hmm)
+    return _stubborness_factor_4state(T, q)
+end
+
+function _stubborness_factor_4state(transition_matrix::AbstractMatrix, q::Int)
+    p0 = markov_equilibrium(transition_matrix)
+    Tq = transition_matrix[1:2,1:2]^q
+    sL = p0[3] * transition_matrix[3,1:2]' * Tq * transition_matrix[1:2,3]
+    wL = p0[3] * transition_matrix[3,1:2]' * Tq * transition_matrix[1:2,4]
+    sR = p0[4] * transition_matrix[4,1:2]' * Tq * transition_matrix[1:2,4]
+    wR = p0[4] * transition_matrix[4,1:2]' * Tq * transition_matrix[1:2,3]
+    return (sL + sR) / (wL + wR)
+end
