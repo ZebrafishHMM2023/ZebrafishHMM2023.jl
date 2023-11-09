@@ -110,3 +110,8 @@ function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_TN04})
         return ZebrafishHMM_TN04(initial_probs, transition_matrix, Normal(forw_params...), Normal(turn_params...))
     end
 end
+
+function stubborness_factor(hmm::ZebrafishHMM_TN04, q::Int)
+    T = HiddenMarkovModels.transition_matrix(hmm)
+    return _stubborness_factor_4_state(T, q)
+end

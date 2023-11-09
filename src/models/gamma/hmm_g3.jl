@@ -104,3 +104,8 @@ function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_G3})
         return ZebrafishHMM_G3(initial_probs, transition_matrix, Normal(forw_params...), Gamma(turn_params...))
     end
 end
+
+function stubborness_factor(hmm::ZebrafishHMM_G3, q::Int) # does not depend on q
+    T = HiddenMarkovModels.transition_matrix(hmm)
+    return _stubborness_factor_3_state(T)
+end
