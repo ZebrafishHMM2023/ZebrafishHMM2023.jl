@@ -29,7 +29,7 @@ mean(>(0), reduce(vcat, trajs))
 mean(<(0), reduce(vcat, trajs))
 mean(iszero, reduce(vcat, trajs))
 
-hmm = ZebrafishHMM_TN04(
+hmm = ZebrafishHMM_TN4(
     rand(4),
     rand(4,4),
     Normal(0, 3),
