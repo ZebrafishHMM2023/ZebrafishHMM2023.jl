@@ -86,12 +86,25 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_TN3, init_count, trans_count, obs_seq, 
     #= Update left-right turn emission probabilities =#
     @assert iszero(state_marginals[2, findall(obs_seq .> 0)])
     @assert iszero(state_marginals[3, findall(obs_seq .< 0)])
+    @assert isempty(findall(>(0), state_marginals[2,:]) ∩ findall(>(0), state_marginals[3,:]))
 
-    turn_marginals = ifelse.(obs_seq .< 0, state_marginals[2,:], state_marginals[3,:])
-    S1 = mean(turn_marginals .* abs.(obs_seq)) / mean(turn_marginals)
-    S2 = mean(turn_marginals .* abs2.(obs_seq)) / mean(turn_marginals)
-    μ, σ = half_normal_fit(S1, S2)
+    turn_obs = [-obs_seq[state_marginals[2,:] .> 0]; obs_seq[state_marginals[3,:] .> 0]]
+    turn_marginals = [state_marginals[2, state_marginals[2,:] .> 0]; state_marginals[3, state_marginals[3,:] .> 0]]
+    @assert all(>(0), turn_obs)
+    @assert all(>(0), turn_marginals)
+
+    S1 = mean(turn_marginals .* turn_obs) / mean(turn_marginals)
+    ν = mean(turn_marginals .* abs2.(turn_obs .- S1)) / mean(turn_marginals)
+    S2 = ν + S1^2
+
+    μ, σ = half_normal_fit(S1, S2; γ = hmm.regularization)
     hmm.turn = Normal(μ, σ)
+
+    # turn_marginals = ifelse.(obs_seq .< 0, state_marginals[2,:], state_marginals[3,:])
+    # S1 = mean(turn_marginals .* abs.(obs_seq)) / mean(turn_marginals)
+    # S2 = mean(turn_marginals .* abs2.(obs_seq)) / mean(turn_marginals)
+    # μ, σ = half_normal_fit(S1, S2)
+    # hmm.turn = Normal(μ, σ)
 end
 
 function save_hmm(path::AbstractString, hmm::ZebrafishHMM_TN3)

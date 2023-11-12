@@ -87,6 +87,8 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_TN4, init_count, trans_count, obs_seq, 
     hmm.forw = fit_mle(typeof(hmm.forw), obs_seq, state_marginals[1,:] + state_marginals[2,:]; mu = 0.0)
 
     #= Update left-right turn emission probabilities =#
+    @assert iszero(state_marginals[3, findall(obs_seq .> 0)])
+    @assert iszero(state_marginals[4, findall(obs_seq .< 0)])
     @assert isempty(findall(>(0), state_marginals[3,:]) ∩ findall(>(0), state_marginals[4,:]))
 
     turn_obs = [-obs_seq[state_marginals[3,:] .> 0]; obs_seq[state_marginals[4,:] .> 0]]

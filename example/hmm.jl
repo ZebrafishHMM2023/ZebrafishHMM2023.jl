@@ -29,19 +29,42 @@ mean(>(0), reduce(vcat, trajs))
 mean(<(0), reduce(vcat, trajs))
 mean(iszero, reduce(vcat, trajs))
 
+hmm = ZebrafishHMM_TN04(
+    rand(4),
+    rand(4,4),
+    Normal(0, 3),
+    Normal(0, 50)
+)
+normalize_all!(hmm)
+(hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 100)
+lL[end]
+
+
 hmm = ZebrafishHMM_TN4(
     rand(4),
     rand(4,4),
     Normal(0, 3),
     Normal(0, 50),
-    1e-6
+    1e-2
 )
 normalize_all!(hmm)
-
 (hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 100)
-lL
+lL[end]
 
-stubborness_factor(hmm, 2)
+
+hmm = ZebrafishHMM_TN3(
+    rand(3),
+    rand(3,3),
+    Normal(0, 3),
+    Normal(0, 50),
+    1e-2
+)
+normalize_all!(hmm)
+(hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 100)
+lL[end]
+lL[1]
+
+stubborness_factor(hmm, 3)
 
 markov_equilibrium(hmm.transition_matrix)
 
@@ -53,16 +76,3 @@ hmm.turn
 
 mean(hmm.forw), std(hmm.forw)
 mean(hmm.turn), std(hmm.turn)
-
-hmm.transition_matrix
-hmm.initial_probs
-
-viterbi(hmm, trajs, length(trajs))
-
-using SpecialFunctions: erfcx
-using ZebrafishHMM2023: half_normal_fit, half_normal_fit_optimization, half_normal_fit_optim
-half_normal_fit_iter(sqrt(2/π), 1)
-erfcx(0)
-
-half_normal_fit_optimization(3.28205277499448947798906269824, 15.5641055499889789559781253965)
-half_normal_fit_optim(3.28205277499448947798906269824, 15.5641055499889789559781253965)
