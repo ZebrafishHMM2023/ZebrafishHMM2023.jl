@@ -12,7 +12,7 @@ using Statistics: mean
         μ = randn()
         σ = 5rand()
         ll = mean(logpdf.(truncated(Normal(μ, σ), 0, nothing), abs.(x)))
-        @test half_normal_loglikelihood(μ/σ, 1/σ, S1, S2) ≈ ll
+        @test half_normal_loglikelihood(μ, σ, S1, S2) ≈ ll
     end
 end
 
