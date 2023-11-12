@@ -10,16 +10,19 @@ mutable struct ZebrafishHMM_TN3 <: HiddenMarkovModels.AbstractHMM
     const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
     forw::Normal{Float64}
     turn::Normal{Float64}
+    regularization::Float64
 
     function ZebrafishHMM_TN3(
         initial_probs::AbstractVector{<:Real},
         transition_matrix::AbstractMatrix{<:Real},
         forw::Normal{<:Real},
-        turn::Normal{<:Real}
+        turn::Normal{<:Real},
+        regularization::Float64 = 1e-10
     )
         length(initial_probs) == 3 || throw(ArgumentError("initial_probs should have 3 elements"))
         size(transition_matrix) == (3, 3) || throw(ArgumentError("transition_matrix should be 3x3"))
-        return new(initial_probs, transition_matrix, forw, turn)
+        regularization > 0 || throw(ArgumentError("regularization must be positive; got $regularization"))
+        return new(initial_probs, transition_matrix, forw, turn, regularization)
     end
 end
 

@@ -7,7 +7,7 @@ using Distributions: Normal, Gamma, fit_mle
 using LinearAlgebra
 
 #= Load trajectories. =#
-trajs = load_behaviour_free_swimming_trajs(22)
+trajs = load_behaviour_free_swimming_trajs(18)
 
 #= Zero values give trouble with Gamma.
 There are only 3 trajectories with a zero, so I'll just filter those out. =#
@@ -33,14 +33,15 @@ hmm = ZebrafishHMM_TN4(
     rand(4),
     rand(4,4),
     Normal(0, 3),
-    Normal(0, 50)
+    Normal(0, 50),
+    1e-6
 )
 normalize_all!(hmm)
 
 (hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 100)
 lL
 
-stubborness_factor(hmm, 4)
+stubborness_factor(hmm, 2)
 
 markov_equilibrium(hmm.transition_matrix)
 
