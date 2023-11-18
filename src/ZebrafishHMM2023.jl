@@ -31,6 +31,6 @@ include("models/trunc_norm_0/hmm_tn03.jl")
 include("models/trunc_norm_0/hmm_tn04.jl")
 include("models/trunc_norm/hmm_tn3.jl")
 include("models/trunc_norm/hmm_tn4.jl")
-include("models/elife2020.jl")
+include("models/elife2020/elife2020.jl")
 
 end
