@@ -7,9 +7,10 @@ end
     FL, FR, L, R (in that order). =#
 function _stubborness_factor_4_state(transition_matrix::AbstractMatrix, q::Int)
     @assert size(transition_matrix) == (4, 4)
+    @assert q ≥ 1
 
     p0 = markov_equilibrium(transition_matrix)
-    TFq = transition_matrix[1:2,1:2]^q
+    TFq = transition_matrix[1:2,1:2]^(q - 1)
     sL = p0[3] * transition_matrix[3,1:2]' * TFq * transition_matrix[1:2,3]
     sR = p0[4] * transition_matrix[4,1:2]' * TFq * transition_matrix[1:2,4]
     wL = p0[3] * transition_matrix[3,1:2]' * TFq * transition_matrix[1:2,4]

@@ -85,6 +85,6 @@ end
     U = (p_forw_1 - p_forw_2) / (p_forw_1 + p_forw_2)
     W = (p_turn_1 - p_turn_2) / (p_turn_1 + p_turn_2)
     for q = 1:10
-        @test stubborness_factor(hmm, q) ≈ (1 + U^q * W) / (1 - U^q * W)
+        @test stubborness_factor(hmm, q) ≈ (1 + U^(q - 1) * W) / (1 - U^(q - 1) * W)
     end
 end

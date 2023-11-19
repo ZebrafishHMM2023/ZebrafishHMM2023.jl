@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
+## 7.0.0
+
+### Breaking changes
+
+- Changed stubborness factor definition, shifting `q` by one, to be consistent with the paper. `stubborness_factor(hmm, q)` now gives the value corresponding to `stubborness_factor(hmm, q - 1)` in previous versions.
+
 ## 4.0.0
 
 ### Breaking changes
