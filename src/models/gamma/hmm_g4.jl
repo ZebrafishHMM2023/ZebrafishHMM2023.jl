@@ -1,24 +1,28 @@
 mutable struct ZebrafishHMM_G4 <: HiddenMarkovModels.AbstractHMM
     #=
-    states are stored in this order:
+    If allow_flipe == false, states are stored in this order:
         1. Forward-Left (forward bouts, but last turn was left)
         2. Forward-Right (forward bouts, but last turn was right)
         3. Left (left turning bouts)
         4. Right (right turning bouts)
+
+    If allow_flipe == true, FL and FR are indistinguishable!
     =#
     const initial_probs::Vector{Float64}
     const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
     forw::Normal{Float64}
     turn::Gamma{Float64}
+    allow_flip::Bool # allow FL -> R or FR -> L transitions
 
     function ZebrafishHMM_G4(
         initial_probs::AbstractVector{<:Real},
         transition_matrix::AbstractMatrix{<:Real},
-        forw::Normal{<:Real}, turn::Gamma{<:Real}
+        forw::Normal{<:Real}, turn::Gamma{<:Real},
+        allow_flip::Bool = false
     )
         length(initial_probs) == 4 || throw(ArgumentError("initial_probs should have 4 elements"))
         size(transition_matrix) == (4, 4) || throw(ArgumentError("transition_matrix should be 4x4"))
-        return new(initial_probs, transition_matrix, forw, turn)
+        return new(initial_probs, transition_matrix, forw, turn, allow_flip)
     end
 end
 
@@ -54,10 +58,12 @@ end
 
 function normalize_transition_matrix!(hmm::ZebrafishHMM_G4)
     # forbidden transitions
-    hmm.transition_matrix[3,2] = 0 # forbid left -> forward-right
-    hmm.transition_matrix[4,1] = 0 # forbid right -> forward-left
-    #hmm.transition_matrix[1,2] = 0 # forbid forward-left -> forward-right
-    #hmm.transition_matrix[2,1] = 0 # forbid forward-right -> forward-left
+    if !hmm.allow_flip
+        hmm.transition_matrix[3,2] = 0 # forbid left -> forward-right
+        hmm.transition_matrix[4,1] = 0 # forbid right -> forward-left
+        #hmm.transition_matrix[1,2] = 0 # forbid forward-left -> forward-right
+        #hmm.transition_matrix[2,1] = 0 # forbid forward-right -> forward-left
+    end
 
     # TODO: impose left / right symmetry ?
 
@@ -107,7 +113,8 @@ function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_G4})
         transition_matrix = read(h5, "transition_matrix")
         forw_params = read(h5, "forw")
         turn_params = read(h5, "turn")
-        return ZebrafishHMM_G4(initial_probs, transition_matrix, Normal(forw_params...), Gamma(turn_params...))
+        allow_flip = !(transition_matrix[3,2] == transition_matrix[4,1] == 0)
+        return ZebrafishHMM_G4(initial_probs, transition_matrix, Normal(forw_params...), Gamma(turn_params...), allow_flip)
     end
 end
 
