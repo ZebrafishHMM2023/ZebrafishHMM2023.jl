@@ -24,6 +24,7 @@ include("data.jl")
 include("util.jl")
 include("truncated_normal.jl")
 include("hmm.jl")
+include("signed_gamma.jl")
 
 include("models/gamma/hmm_g3.jl")
 include("models/gamma/hmm_g4.jl")

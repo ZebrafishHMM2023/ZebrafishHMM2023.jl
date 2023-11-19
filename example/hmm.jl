@@ -14,11 +14,10 @@ using LinearAlgebra
 #= Load trajectories. =#
 trajs = load_behaviour_free_swimming_trajs(18)
 
-
 hmm_elife = ZebrafishHMM_Elife2020_Gamma(; pinit_turn=rand(), pturn=rand(), pflip=rand(), σforw=0.1, turn=Gamma(1, 15))
-(hmm_elife, lL) = baum_welch(hmm_elife, trajs, length(trajs); max_iterations = 200)
+(hmm_elife, lL) = baum_welch(hmm_elife, trajs, length(trajs); max_iterations = 500)
 hmm_elife
-stubborness_factor(hmm, 2)
+stubborness_factor(hmm_elife, 2)
 
 #= Zero values give trouble with Gamma.
 There are only 3 trajectories with a zero, so I'll just filter those out. =#

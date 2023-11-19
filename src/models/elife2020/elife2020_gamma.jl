@@ -55,10 +55,10 @@ end
 function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_Elife2020_Gamma, i::Int)
     if i == 1 || i == 2 # forward / left, forward / right
         dist = Normal(0, hmm.σforw)
-    elseif i == 3 # turn - left
-        dist = AffineDistribution(0, -1, hmm.turn)
-    elseif i == 4 # turn - right
-        dist = hmm.turn
+    elseif i == 3 # turn left
+        dist = SignedGamma(hmm.turn; positive = false)
+    elseif i == 4 # turn right
+        dist = SignedGamma(hmm.turn; positive = true)
     else
         throw(ArgumentError("State index must be 1, 2, 3, or 4; got $i"))
     end
@@ -83,10 +83,16 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_Elife2020_Gamma, init_count, trans_coun
     #= Update turn emission probabilities =#
     @assert iszero(state_marginals[3, findall(obs_seq .> 0)])
     @assert iszero(state_marginals[4, findall(obs_seq .< 0)])
-    @assert isempty(findall(>(0), state_marginals[3,:]) ∩ findall(>(0), state_marginals[4,:]))
 
-    turn_obs = [-obs_seq[state_marginals[3,:] .> 0]; obs_seq[state_marginals[4,:] .> 0]]
-    turn_marginals = [state_marginals[3, state_marginals[3,:] .> 0]; state_marginals[4, state_marginals[4,:] .> 0]]
+    turn_obs = [
+        -obs_seq[(obs_seq .< 0) .& (state_marginals[3,:] .> 0)];
+        +obs_seq[(obs_seq .> 0) .& (state_marginals[4,:] .> 0)]
+    ]
+    turn_marginals = [
+        state_marginals[3, (obs_seq .< 0) .& (state_marginals[3,:] .> 0)];
+        state_marginals[4, (obs_seq .> 0) .& (state_marginals[4,:] .> 0)]
+    ]
+
     @assert all(>(0), turn_obs)
     @assert all(>(0), turn_marginals)
 

@@ -1,6 +1,6 @@
 struct SignedGamma
-    positive::Bool
     gamma::Gamma{Float64}
+    positive::Bool
 end
 
 function SignedGamma(gamma::Gamma; positive::Bool)
@@ -20,9 +20,11 @@ function Base.rand(r::AbstractRNG, d::SignedGamma)
 end
 
 function DensityInterface.logdensityof(d::SignedGamma, x::Real)
-    if d.positive
-        return logpdf(d.gamma, x)
+    if iszero(x)
+        return oftype(logdensityof(d.gamma, x), -Inf)
+    elseif d.positive
+        return logdensityof(d.gamma, x)
     else
-        return logpdf(d.gamma, -x)
+        return logdensityof(d.gamma, -x)
     end
 end

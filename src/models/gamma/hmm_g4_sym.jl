@@ -33,9 +33,9 @@ function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_G4_Sym, i::Int)
     if i ∈ (1, 2) # forward-left, forward-right
         dist = hmm.forw
     elseif i == 3 # left
-        dist = AffineDistribution(0, -1, hmm.turn)
+        dist = SignedGamma(hmm.turn; positive = false)
     elseif i == 4 # right
-        dist = hmm.turn
+        dist = SignedGamma(hmm.turn; positive = true)
     else
         throw(ArgumentError("State index must be 1, 2, 3, or 4; got $i"))
     end
@@ -87,8 +87,23 @@ function StatsAPI.fit!(
     hmm.forw = fit_mle(typeof(hmm.forw), obs_seq, state_marginals[1,:] + state_marginals[2,:]; mu = 0.0)
 
     #= Update left-right turn emission probabilities. =#
-    turn_marginals = ifelse.(obs_seq .< 0, state_marginals[3,:], state_marginals[4,:])
-    hmm.turn = fit_mle(typeof(hmm.turn), abs.(obs_seq), turn_marginals)
+    @assert iszero(state_marginals[3, findall(obs_seq .> 0)])
+    @assert iszero(state_marginals[4, findall(obs_seq .< 0)])
+
+    turn_obs = [
+        -obs_seq[(obs_seq .< 0) .& (state_marginals[3,:] .> 0)];
+        +obs_seq[(obs_seq .> 0) .& (state_marginals[4,:] .> 0)]
+    ]
+    turn_marginals = [
+        state_marginals[3, (obs_seq .< 0) .& (state_marginals[3,:] .> 0)];
+        state_marginals[4, (obs_seq .> 0) .& (state_marginals[4,:] .> 0)]
+    ]
+    @assert all(>(0), turn_obs)
+    @assert all(>(0), turn_marginals)
+
+    hmm.turn = fit_mle(typeof(hmm.turn), turn_obs, turn_marginals)
+
+    return hmm
 end
 
 function save_hmm(path::AbstractString, hmm::ZebrafishHMM_G4_Sym)
