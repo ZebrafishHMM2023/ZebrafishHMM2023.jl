@@ -1,7 +1,7 @@
 using ZebrafishHMM2023: normalize_all!, load_behaviour_free_swimming_trajs, ZebrafishHMM_TN03,
     markov_equilibrium, stubborness_factor, ZebrafishHMM_TN04, FL_FR_canon!,
     ZebrafishHMM_G4_Sym
-using HiddenMarkovModels: baum_welch
+using HiddenMarkovModels: baum_welch, logdensityof
 using Distributions: Normal, Gamma
 using Statistics: middle
 using Test: @test, @testset
