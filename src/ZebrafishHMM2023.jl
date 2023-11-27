@@ -17,6 +17,7 @@ using SpecialFunctions: logerfcx, erfcx
 using DampedUpdates: damp
 using LinearAlgebra: eigvecs
 using StaticArrays: SMatrix, @SMatrix, @SVector
+using MAT: matread
 
 include("artifacts.jl")
 include("missing.jl")

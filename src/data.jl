@@ -24,5 +24,11 @@
 
 function load_behaviour_free_swimming_trajs(temperature::Int)
     data = load_behaviour_free_swimming_data(temperature)
-    return [filter(!isnan, traj) for traj in eachcol(data.dtheta)]
+    return [filter(!isnan, traj) for traj = eachcol(data.dtheta)]
+end
+
+# load long single fish trajectories
+function legoc2021_single_fish_T26_trajs()
+    mat = matread(legoc2021_single_fish_T26_path())
+    return [[filter(!isnan, traj) for traj = eachcol(trajs)] for trajs = vec(mat["dtheta"])]
 end

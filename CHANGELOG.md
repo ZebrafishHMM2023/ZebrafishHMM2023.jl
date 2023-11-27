@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
+## 7.2.0
+
+### Added
+
+- `legoc2021_single_fish_T26_trajs()`, loads long single fish trajectories from Le Goc et al 2021.
+
 ## 7.0.0
 
 ### Breaking changes

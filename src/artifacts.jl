@@ -27,3 +27,12 @@ function load_behaviour_free_swimming_data(temperature::Int)
         return (; zip(Symbol.(dataset_names), datasets)..., temperature, units)
     end
 end
+
+#= Original dataset from Le Goc et al 2021, which should contain long trajectories =#
+function legoc2021_data_dir()
+    return artifact"LeGoc2021"
+end
+
+function legoc2021_single_fish_T26_path()
+    return joinpath(legoc2021_data_dir(), "sf_allsequences_T26.mat")
+end
