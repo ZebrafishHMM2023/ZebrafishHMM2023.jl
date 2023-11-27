@@ -109,7 +109,7 @@ end
 function save_hmm(path::AbstractString, hmm::ZebrafishHMM_G4_Sym)
     h5open(path, "w") do h5
         write(h5, "type", "ZebrafishHMM_G4_Sym")
-        write(h5, "initial_probs", hmm.initial_probs)
+        write(h5, "initial_probs", [hmm.pinit_turn])
         write(h5, "transition_matrix", hmm.transition_matrix)
         write(h5, "forw", collect(params(hmm.forw)))
         write(h5, "turn", collect(params(hmm.turn)))
@@ -119,11 +119,11 @@ end
 function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_G4_Sym})
     h5open(path, "r") do h5
         read(h5, "type") == "ZebrafishHMM_G4_Sym" || throw(ArgumentError("HMM type missmatch"))
-        initial_probs = read(h5, "initial_probs")
+        pinit_turn = only(read(h5, "initial_probs"))
         transition_matrix = read(h5, "transition_matrix")
         forw_params = read(h5, "forw")
         turn_params = read(h5, "turn")
-        return ZebrafishHMM_G4_Sym(initial_probs, transition_matrix, Normal(forw_params...), Gamma(turn_params...))
+        return ZebrafishHMM_G4_Sym(pinit_turn, transition_matrix, Normal(forw_params...), Gamma(turn_params...))
     end
 end
 
