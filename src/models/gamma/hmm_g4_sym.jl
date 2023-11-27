@@ -61,6 +61,18 @@ function normalize_transition_matrix!(hmm::ZebrafishHMM_G4_Sym)
     return hmm.transition_matrix
 end
 
+#=
+There is a degeneracy between the first two hidden states (which should correspond to FL, FR).
+This function fixes that degeneracy by imposing that FL -> L be more likely than FL -> R.
+If this condition is not satisfied, states are permuted appropriately.
+=#
+function FL_FR_canon!(hmm::ZebrafishHMM_G4_Sym)
+    if hmm.transition_matrix[1,3] < hmm.transition_matrix[1,4]
+        hmm.transition_matrix .= hmm.transition_matrix[[2,1,3,4], [2,1,3,4]]
+    end
+    return hmm
+end
+
 function normalize_all!(hmm::ZebrafishHMM_G4_Sym)
     normalize_transition_matrix!(hmm)
     return hmm

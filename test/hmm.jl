@@ -1,5 +1,6 @@
 using ZebrafishHMM2023: normalize_all!, load_behaviour_free_swimming_trajs, ZebrafishHMM_TN03,
-    markov_equilibrium, stubborness_factor, ZebrafishHMM_TN04
+    markov_equilibrium, stubborness_factor, ZebrafishHMM_TN04, FL_FR_canon!,
+    ZebrafishHMM_G4_Sym
 using HiddenMarkovModels: baum_welch
 using Distributions: Normal
 using Statistics: middle
@@ -87,4 +88,19 @@ end
     for q = 1:10
         @test stubborness_factor(hmm, q) ≈ (1 + U^(q - 1) * W) / (1 - U^(q - 1) * W)
     end
+end
+
+@testset "g4_sym" begin
+    hmm = ZebrafishHMM_G4_Sym(
+        rand(),
+        rand(4,4),
+        Normal(0.0, 1.0),
+        Gamma(0.5, 15.0)
+    )
+    normalize_all!(hmm)
+    trajs = load_behaviour_free_swimming_trajs(22)
+    ll0 = logdensityof(hmm, trajs, length(trajs))
+    FL_FR_canon!(hmm)
+    ll1 = logdensityof(hmm, trajs, length(trajs))
+    @test ll1 ≈ ll0
 end

@@ -39,20 +39,23 @@ mean(>(0), reduce(vcat, trajs))
 mean(<(0), reduce(vcat, trajs))
 mean(iszero, reduce(vcat, trajs))
 hmm = ZebrafishHMM_G4_Sym(
-    hmm_elife.pinit_turn,
-    Matrix(transition_matrix(hmm_elife)),
-    Normal(0.0, hmm_elife.σforw),
-    hmm_elife.turn,
+    rand(),
+    rand(4,4),
+    Normal(0.0, 1.0),
+    Gamma(0.5, 15.0)
 )
 normalize_all!(hmm)
 logdensityof(hmm, trajs, length(trajs))
-logdensityof(hmm_elife, trajs, length(trajs))
-
 (hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 1000)
 lL[end]
 logdensityof(hmm, trajs, length(trajs))
 
-stubborness_factor(hmm, 3)
+if hmm.transition_matrix[1,3]< hmm.transition_matrix[1,4]
+    hmm.transition_matrix .= hmm.transition_matrix[[2,1,3,4], [2,1,3,4]]
+end
+logdensityof(hmm, trajs, length(trajs))
+
+stubborness_factor(hmm, 1)
 
 
 normalize_all!(hmm)
