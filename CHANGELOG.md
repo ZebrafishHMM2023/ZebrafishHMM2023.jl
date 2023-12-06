@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
+## 7.4.0
+
+### Added
+
+- `chunks` to split a trajectory into chunks of similar size.
+
 ## 7.2.0
 
 ### Added
