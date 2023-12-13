@@ -1,9 +1,10 @@
 using ZebrafishHMM2023: load_behaviour_free_swimming_data, normalize_all!,
     normalize_transition_matrix!,
     load_behaviour_free_swimming_trajs,
-    ZebrafishHMM_G3, ZebrafishHMM_G4, ZebrafishHMM_TN03, ZebrafishHMM_TN04,
+    ZebrafishHMM_G3, ZebrafishHMM_G4, ZebrafishHMM_TN03, ZebrafishHMM_TN04, ZebrafishHMM_TN04_Sym,
     ZebrafishHMM_TN3, ZebrafishHMM_TN4, markov_equilibrium, stubborness_factor,
-    ZebrafishHMM_Elife2020, ZebrafishHMM_Elife2020_Gamma, ZebrafishHMM_G4_Sym
+    ZebrafishHMM_Elife2020, ZebrafishHMM_Elife2020_Gamma, ZebrafishHMM_G4_Sym,
+    ZebrafishHMM_G3_Sym
 using HiddenMarkovModels: baum_welch, logdensityof, forward_backward, forward, viterbi,
     transition_matrix, initial_distribution
 using Statistics: mean, std
@@ -38,15 +39,15 @@ fit_mle(Gamma, -filter(<(0), reduce(vcat, trajs)))
 mean(>(0), reduce(vcat, trajs))
 mean(<(0), reduce(vcat, trajs))
 mean(iszero, reduce(vcat, trajs))
-hmm = ZebrafishHMM_G4_Sym(
+hmm = ZebrafishHMM_G3_Sym(
     rand(),
-    rand(4,4),
-    Normal(0.0, 1.0),
-    Gamma(0.5, 15.0)
+    rand(3,3),
+    1.0,
+    Gamma(0.6, 15.0)
 )
 normalize_all!(hmm)
 logdensityof(hmm, trajs, length(trajs))
-(hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 1000)
+(hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 1000, check_loglikelihood_increasing = false)
 lL[end]
 logdensityof(hmm, trajs, length(trajs))
 

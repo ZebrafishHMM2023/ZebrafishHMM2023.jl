@@ -76,7 +76,7 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_TN04_Sym, init_count, trans_count, obs_
     normalize_transition_matrix!(hmm)
 
     #= Update forward emission probabilities. Forward angles are always centered at μ = 0. =#
-    hmm.σforw = fit_mle(Normal(0, hmm.σforw), obs_seq, state_marginals[1,:] + state_marginals[2,:]; mu = 0.0).σ
+    hmm.σforw = fit_mle(Normal{Float64}, obs_seq, state_marginals[1,:] + state_marginals[2,:]; mu = 0.0).σ
 
     #= Update left-right turn emission probabilities =#
     @assert iszero(state_marginals[3, findall(obs_seq .> 0)])
@@ -93,7 +93,7 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_TN04_Sym, init_count, trans_count, obs_
     @assert all(>(0), turn_obs)
     @assert all(>(0), turn_marginals)
 
-    hmm.σturn = fit_mle(Normal(0, hmm.σturn), obs_seq, turn_marginals; mu = 0.0).σ
+    hmm.σturn = fit_mle(Normal{Float64}, obs_seq, turn_marginals; mu = 0.0).σ
 
     return hmm
 end
