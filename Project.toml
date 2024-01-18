@@ -1,7 +1,7 @@
 name = "ZebrafishHMM2023"
 uuid = "982e605e-fd7d-4c5d-a517-224ed2053a87"
 authors = ["JFdCD <jfdecd@icloud.com>"]
-version = "7.5.0"
+version = "7.5.1"
 
 [deps]
 DampedUpdates = "c1d5de99-3441-47e2-85af-8ce5ee9923a2"
@@ -32,7 +32,7 @@ LinearAlgebra = "1.9"
 MAT = "0.10.6"
 Optim = "1.7"
 Optimization = "3.19"
-OptimizationOptimJL = "0.1"
+OptimizationOptimJL = "0.1,0.2"
 Random = "1.9"
 SpecialFunctions = "2.3"
 StaticArrays = "1.6"
