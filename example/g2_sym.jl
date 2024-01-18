@@ -8,15 +8,19 @@ using ZebrafishHMM2023: load_behaviour_free_swimming_data, normalize_all!,
 using HiddenMarkovModels: baum_welch, logdensityof, forward_backward, forward, viterbi,
     transition_matrix, initial_distribution
 using Statistics: mean, std
-using Distributions: Normal, Gamma, fit_mle
+using Distributions: Normal, Gamma, fit_mle, pdf
 using LinearAlgebra
 
 
 #= Load trajectories. =#
-trajs = load_behaviour_free_swimming_trajs(18)
+trajs = load_behaviour_free_swimming_trajs(22)
 
-hmm_elife = ZebrafishHMM_Elife2020_Gamma(; pinit_turn=rand(), pturn=rand(), pflip=rand(), σforw=0.1, turn=Gamma(1, 15))
-(hmm_elife, lL) = baum_welch(hmm_elife, trajs, length(trajs); max_iterations = 500)
+hmm = ZebrafishHMM_G2_Sym(rand(), rand(), Gamma(2.0, 5.0))
+logdensityof(hmm, trajs, length(trajs))
+viterbi(hmm, trajs, length(trajs))
+(hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 500)
+
+
 hmm_elife
 stubborness_factor(hmm_elife, 2)
 

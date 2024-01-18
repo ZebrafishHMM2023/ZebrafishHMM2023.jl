@@ -97,3 +97,24 @@ function stubborness_factor(hmm::ZebrafishHMM_G3_Sym, q::Int) # does not depend 
     T = HiddenMarkovModels.transition_matrix(hmm)
     return _stubborness_factor_3_state(T)
 end
+
+function save_hmm(path::AbstractString, hmm::ZebrafishHMM_G3_Sym)
+    h5open(path, "w") do h5
+        write(h5, "type", "ZebrafishHMM_G3_Sym")
+        write(h5, "pinit_turn", [hmm.pinit_turn])
+        write(h5, "transition_matrix", hmm.transition_matrix)
+        write(h5, "σforw", [hmm.σforw])
+        write(h5, "turn", collect(params(hmm.turn)))
+    end
+end
+
+function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_G3_Sym})
+    h5open(path, "r") do h5
+        read(h5, "type") == "ZebrafishHMM_G3_Sym" || throw(ArgumentError("HMM type missmatch"))
+        pinit_turn = only(read(h5, "pinit_turn"))
+        transition_matrix = read(h5, "transition_matrix")
+        σforw = only(read(h5, "σforw"))
+        turn_params = read(h5, "turn")
+        return ZebrafishHMM_G3_Sym(pinit_turn, transition_matrix, σforw, Gamma(turn_params...))
+    end
+end

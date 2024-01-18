@@ -28,6 +28,7 @@ include("hmm.jl")
 include("signed_gamma.jl")
 include("ATol.jl")
 
+include("models/gamma/hmm_g2_sym.jl")
 include("models/gamma/hmm_g3.jl")
 include("models/gamma/hmm_g3_sym.jl")
 include("models/gamma/hmm_g4.jl")

@@ -94,7 +94,7 @@ end
     hmm = ZebrafishHMM_G4_Sym(
         rand(),
         rand(4,4),
-        Normal(0.0, 1.0),
+        1.0,
         Gamma(0.5, 15.0)
     )
     normalize_all!(hmm)

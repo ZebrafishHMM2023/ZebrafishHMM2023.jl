@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
+## 8.0.0
+
+### Breaking changes
+
+- `ZebrafishHMM_G4_Sym` now has a `σforw` parameter, instead of a `Normal` distribution
+
+### Added
+
+- `save_hmm` and `load_hmm` for `ZebrafishHMM_G3_Sym` and `ZebrafishHMM_G4_Sym`
+
 ## 7.4.0
 
 ### Added

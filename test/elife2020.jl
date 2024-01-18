@@ -20,7 +20,7 @@ end
     hmm = ZebrafishHMM_G4_Sym(
         hmm_elife.pinit_turn,
         Matrix(transition_matrix(hmm_elife)),
-        Normal(0.0, hmm_elife.σforw),
+        hmm_elife.σforw,
         hmm_elife.turn,
     )
     normalize_all!(hmm)

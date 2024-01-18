@@ -4,16 +4,17 @@ mutable struct ZebrafishHMM_G4_Sym <: HiddenMarkovModels.AbstractHMM
     =#
     pinit_turn::Float64
     const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
-    forw::Normal{Float64}
+    σforw::Float64
     turn::Gamma{Float64}
 
     function ZebrafishHMM_G4_Sym(
         pinit_turn::Real,
         transition_matrix::AbstractMatrix{<:Real},
-        forw::Normal{<:Real}, turn::Gamma{<:Real},
+        σforw::Float64, turn::Gamma{<:Real},
     )
         size(transition_matrix) == (4, 4) || throw(ArgumentError("transition_matrix should be 4x4"))
-        return new(pinit_turn, transition_matrix, forw, turn)
+        σforw ≥ 0 || throw(ArgumentError("σforw should be non-negative"))
+        return new(pinit_turn, transition_matrix, σforw, turn)
     end
 end
 
@@ -31,7 +32,7 @@ end
 
 function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_G4_Sym, i::Int)
     if i ∈ (1, 2) # forward-left, forward-right
-        dist = hmm.forw
+        dist = Normal(0, hmm.σforw)
     elseif i == 3 # left
         dist = SignedGamma(hmm.turn; positive = false)
     elseif i == 4 # right
@@ -96,7 +97,7 @@ function StatsAPI.fit!(
     normalize_transition_matrix!(hmm)
 
     #= Update forward emission probabilities. =#
-    hmm.forw = fit_mle(typeof(hmm.forw), obs_seq, state_marginals[1,:] + state_marginals[2,:]; mu = 0.0)
+    hmm.σforw = fit_mle(Normal, obs_seq, state_marginals[1,:] + state_marginals[2,:]; mu = 0.0).σ
 
     #= Update left-right turn emission probabilities. =#
     @assert iszero(state_marginals[3, findall(obs_seq .> 0)])
@@ -123,7 +124,7 @@ function save_hmm(path::AbstractString, hmm::ZebrafishHMM_G4_Sym)
         write(h5, "type", "ZebrafishHMM_G4_Sym")
         write(h5, "initial_probs", [hmm.pinit_turn])
         write(h5, "transition_matrix", hmm.transition_matrix)
-        write(h5, "forw", collect(params(hmm.forw)))
+        write(h5, "forw", [hmm.σforw])
         write(h5, "turn", collect(params(hmm.turn)))
     end
 end
@@ -133,9 +134,9 @@ function load_hmm(path::AbstractString, ::Type{ZebrafishHMM_G4_Sym})
         read(h5, "type") == "ZebrafishHMM_G4_Sym" || throw(ArgumentError("HMM type missmatch"))
         pinit_turn = only(read(h5, "initial_probs"))
         transition_matrix = read(h5, "transition_matrix")
-        forw_params = read(h5, "forw")
+        σforw = only(read(h5, "forw"))
         turn_params = read(h5, "turn")
-        return ZebrafishHMM_G4_Sym(pinit_turn, transition_matrix, Normal(forw_params...), Gamma(turn_params...))
+        return ZebrafishHMM_G4_Sym(pinit_turn, transition_matrix, σforw, Gamma(turn_params...))
     end
 end
 
