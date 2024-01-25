@@ -6,15 +6,18 @@ mutable struct ZebrafishHMM_G4_Sym <: HiddenMarkovModels.AbstractHMM
     const transition_matrix::Matrix{Float64} # T[i,j] = probability of transitions i -> j
     σforw::Float64
     turn::Gamma{Float64}
+    min_turn_alpha::Float64
 
     function ZebrafishHMM_G4_Sym(
         pinit_turn::Real,
         transition_matrix::AbstractMatrix{<:Real},
         σforw::Float64, turn::Gamma{<:Real},
+        min_turn_alpha::Float64 = 0.0
     )
         size(transition_matrix) == (4, 4) || throw(ArgumentError("transition_matrix should be 4x4"))
         σforw ≥ 0 || throw(ArgumentError("σforw should be non-negative"))
-        return new(pinit_turn, transition_matrix, σforw, turn)
+        turn.α ≥ min_turn_alpha || throw(ArgumentError("turn.α should be greater than min_turn_alpha"))
+        return new(pinit_turn, transition_matrix, σforw, turn, min_turn_alpha)
     end
 end
 
@@ -115,6 +118,11 @@ function StatsAPI.fit!(
     @assert all(>(0), turn_marginals)
 
     hmm.turn = fit_mle(typeof(hmm.turn), turn_obs, turn_marginals)
+
+    # enforce minimum alpha
+    if hmm.turn.α < hmm.min_turn_alpha
+        hmm.turn.α = hmm.min_turn_alpha
+    end
 
     return hmm
 end
