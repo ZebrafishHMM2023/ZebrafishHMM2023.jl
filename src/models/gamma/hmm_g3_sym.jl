@@ -48,7 +48,7 @@ function normalize_transition_matrix!(hmm::ZebrafishHMM_G3_Sym)
     hmm.transition_matrix .= hmm.transition_matrix ./ sum(hmm.transition_matrix, dims=2)
 
     # left/right symmetry
-    hmm.transition_matrix[2,2] = hmm.transition_matrix[3,3] = middle(hmm.transition_matrix[2,2], hmm.transition_matrix[2,2]) # L -> L, R -> R
+    hmm.transition_matrix[2,2] = hmm.transition_matrix[3,3] = middle(hmm.transition_matrix[2,2], hmm.transition_matrix[3,3]) # L -> L, R -> R
     hmm.transition_matrix[2,3] = hmm.transition_matrix[3,2] = middle(hmm.transition_matrix[2,3], hmm.transition_matrix[3,2]) # L -> R, R -> L
     hmm.transition_matrix[1,2] = hmm.transition_matrix[1,3] = middle(hmm.transition_matrix[1,2], hmm.transition_matrix[1,3]) # F -> L, F -> R
     hmm.transition_matrix[2,1] = hmm.transition_matrix[3,1] = middle(hmm.transition_matrix[2,1], hmm.transition_matrix[3,1]) # L -> F, R -> F
