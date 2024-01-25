@@ -121,7 +121,7 @@ function StatsAPI.fit!(
 
     # enforce minimum alpha
     if hmm.turn.α < hmm.min_turn_alpha
-        hmm.turn.α = hmm.min_turn_alpha
+        hmm.turn = Gamma(hmm.min_turn_alpha, hmm.turn.θ)
     end
 
     return hmm

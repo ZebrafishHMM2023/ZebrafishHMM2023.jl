@@ -94,7 +94,7 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_G3_Sym, init_count, trans_count, obs_se
 
     # enforce minimum alpha
     if hmm.turn.α < hmm.min_turn_alpha
-        hmm.turn.α = hmm.min_turn_alpha
+        hmm.turn = Gamma(hmm.min_turn_alpha, hmm.turn.θ)
     end
 
     return hmm
