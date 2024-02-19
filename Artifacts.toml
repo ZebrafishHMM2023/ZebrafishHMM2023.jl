@@ -13,3 +13,38 @@ lazy = true
     [[LeGoc2021.download]]
     sha256 = "3a5ea54125b67bb4170aaf367bfaa46a5006f44b8a48ab24ee96099564363570"
     url = "https://gist.github.com/cossio/4d28cae0dec94a4ec51692941262a201/raw/abd239da480e85233595ee7fc3512b031138d004.tar.gz"
+
+[Wolf_ARTR_2023_T18]
+git-tree-sha1 = "cc5c933b511c17aea8d54dd90a9cf847e1e65078"
+
+    [[Wolf_ARTR_2023_T18.download]]
+    sha256 = "452a16e6983cba90b03dfbee77f0d4d8a23f378bbc5ebaad48018bdcedfa5318"
+    url = "https://gist.github.com/cossio/7feb8a38b8181e8bb271662149795a25/raw/cc5c933b511c17aea8d54dd90a9cf847e1e65078.tar.gz"
+
+[Wolf_ARTR_2023_T22]
+git-tree-sha1 = "57d353f8dcca99308d90041c43e1ebbdbe9b4aa2"
+
+    [[Wolf_ARTR_2023_T22.download]]
+    sha256 = "48dafab06a7409eb22c2d94a65dc72a49ac3f4b4ebea1ca872cc264bb71fa86d"
+    url = "https://gist.github.com/cossio/577751ccd02577b67ffce2920ef5d12f/raw/57d353f8dcca99308d90041c43e1ebbdbe9b4aa2.tar.gz"
+
+[Wolf_ARTR_2023_T26]
+git-tree-sha1 = "df7e6bfd91c1f01958dd2caf98c9d068c5f00644"
+
+    [[Wolf_ARTR_2023_T26.download]]
+    sha256 = "dc00804daa3ec873ced61da909e63cedd10ad57bacbbbfa982dd71f05a093552"
+    url = "https://gist.github.com/cossio/74831cc4df5821beb72372ab5f407bd5/raw/df7e6bfd91c1f01958dd2caf98c9d068c5f00644.tar.gz"
+
+[Wolf_ARTR_2023_T30]
+git-tree-sha1 = "ec1ed65a3629384cebbf83311ac214afbd3d433d"
+
+    [[Wolf_ARTR_2023_T30.download]]
+    sha256 = "aab41ae8149a8ad1c71d65662cfe5347605bb05e2e019e2b6503211c471eba9d"
+    url = "https://gist.github.com/cossio/f217d0e74a38da6b02eb52b8929e00ce/raw/ec1ed65a3629384cebbf83311ac214afbd3d433d.tar.gz"
+
+[Wolf_ARTR_2023_T33]
+git-tree-sha1 = "b43e28ff20b4ed4aa2ea4c4a303c5494ad2dddc3"
+
+    [[Wolf_ARTR_2023_T33.download]]
+    sha256 = "f2d96281da15b52e0f13423767f07d8a30f041857e3be7aa4a1898379c0aa026"
+    url = "https://gist.github.com/cossio/83a60973625bfd6231544c4cd7afce96/raw/b43e28ff20b4ed4aa2ea4c4a303c5494ad2dddc3.tar.gz"

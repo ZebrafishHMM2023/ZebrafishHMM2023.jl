@@ -27,6 +27,7 @@ include("truncated_normal.jl")
 include("hmm.jl")
 include("signed_gamma.jl")
 include("ATol.jl")
+include("wolf_artr.jl")
 
 include("models/gamma/hmm_g2_sym.jl")
 include("models/gamma/hmm_g3.jl")
