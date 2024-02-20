@@ -2,7 +2,7 @@
 
 julia_version = "1.10.1"
 manifest_format = "2.0"
-project_hash = "681fd5640d43c2c4d5d972136165fc95629ce143"
+project_hash = "8cc05cd396eb9190e6ce8232ac9ce23c4c0d5dd7"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "41c37aa88889c171f1300ceac1313c06e891d245"
@@ -10,9 +10,9 @@ uuid = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
 version = "0.2.6"
 
 [[deps.AbstractTrees]]
-git-tree-sha1 = "faa260e4cb5aba097a73fab382dd4b5819d8ec8c"
+git-tree-sha1 = "2d9c9a55f9c93e8887ad391fbae72f8ef55e1177"
 uuid = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
-version = "0.4.4"
+version = "0.4.5"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -713,9 +713,9 @@ version = "1.2.2"
 
 [[deps.RequiredInterfaces]]
 deps = ["InteractiveUtils", "Logging", "Test"]
-git-tree-sha1 = "deb5b451248bbe5ce37cb639a546ac13d07b791f"
+git-tree-sha1 = "e7eb973af4753abf5d866941268ec6ea2aec5556"
 uuid = "97f35ef4-7bc5-4ec1-a41a-dcc69c7308c6"
-version = "0.1.4"
+version = "0.1.5"
 
 [[deps.Requires]]
 deps = ["UUIDs"]

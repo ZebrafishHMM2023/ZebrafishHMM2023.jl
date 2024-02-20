@@ -1,5 +1,6 @@
 module aqua_tests include("aqua.jl") end
 module wolf_artr_tests include("wolf_artr.jl") end
+module hmm_artr_tests include("artr_hmm.jl") end
 module artifacts_tests include("artifacts.jl") end
 module truncated_normal_tests include("truncated_normal.jl") end
 module io_tests include("io.jl") end

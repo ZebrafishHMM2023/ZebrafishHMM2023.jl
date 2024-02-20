@@ -13,3 +13,5 @@ function chunks(list, n::Int)
     len = ceil(Int, length(list) / n)
     return [list[i:min(end, i + len - 1)] for i = firstindex(list):len:lastindex(list)]
 end
+
+normalize_transition_matrix(T::AbstractMatrix) = T ./ sum(T; dims=2)
