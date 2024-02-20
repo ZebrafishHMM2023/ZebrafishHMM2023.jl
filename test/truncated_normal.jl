@@ -1,3 +1,5 @@
+import Random
+
 using Test: @test, @testset
 using ZebrafishHMM2023: half_normal_fit, half_normal_loglikelihood
 using SpecialFunctions: logerfcx
@@ -5,6 +7,7 @@ using Distributions: truncated, Normal, logpdf
 using Statistics: mean
 
 @testset "half_normal_loglikelihood" begin
+    Random.seed!(1)
     for _ = 1:10
         x = randn(100).^2 + randn(100)
         S1 = mean(abs, x)

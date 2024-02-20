@@ -25,5 +25,12 @@ function artr_wolf_2023(; temperature::Int, fish::Int)
     return matread(artr_wolf_2023_mat(; temperature, fish))["Dinference_corr"]
 end
 
-# mat = matread(legoc2021_single_fish_T26_path())
-# return [[filter(!isnan, traj) for traj = eachcol(trajs)] for trajs = vec(mat["dtheta"])]
+function load_artr_wolf_2023(; temperature, fish)
+    dict = artr_wolf_2023(; temperature, fish)
+    return (;
+        right = dict["rightspikesbin_data"]',
+        left = dict["leftspikesbin_data"]',
+        time = vec(dict["time"]),
+        temperature = dict["T"]
+    )
+end
