@@ -31,6 +31,21 @@ mutable struct ZebrafishHMM_G3_Sym_Full <: HiddenMarkovModels.AbstractHMM
     end
 end
 
+function ZebrafishHMM_G3_Sym_Full(
+    ; pinit_turn::Real,
+    transition_matrix::AbstractMatrix{<:Real},
+    σforw::Real, turn::Gamma{<:Real},
+    forward_displacement::Gamma{<:Real}, turn_displacement::Gamma{<:Real},
+    forward_interboutinterval::Gamma{<:Real}, turn_interboutinterval::Gamma{<:Real},
+    min_alpha::Real = 0.0
+)
+    return ZebrafishHMM_G3_Sym_Full(
+        pinit_turn, transition_matrix, σforw, turn,
+        forward_displacement, turn_displacement,
+        forward_interboutinterval, turn_interboutinterval, min_alpha
+    )
+end
+
 struct ZebrafishHMM_G3_Sym_Full_Obs
     θ::Float64
     d::Float64
@@ -74,11 +89,15 @@ end
 
 function DensityInterface.logdensityof(d::ZebrafishHMM_G3_Sym_Full_Emit_Distribution, obs::ZebrafishHMM_G3_Sym_Full_Obs)
     if d.state_index == 1
-        lpdf_θ = logdensityof(Normal(0, hmm.σforw), obs.θ)
+        lpdf_θ = logdensityof(Normal(0, d.σforw), obs.θ)
         lpdf_d = logdensityof(d.forward_displacement, obs.d)
         lpdf_t = logdensityof(d.forward_interboutinterval, obs.t)
     else
-        lpdf_θ = logdensityof(d.turn, abs(obs.θ))
+        if d.state_index == 2
+            lpdf_θ = logdensityof(d.turn, -obs.θ) # left
+        elseif d.state_index == 3
+            lpdf_θ = logdensityof(d.turn, obs.θ) # right
+        end
         lpdf_d = logdensityof(d.turn_displacement, obs.d)
         lpdf_t = logdensityof(d.turn_interboutinterval, obs.t)
     end
@@ -111,7 +130,10 @@ function normalize_all!(hmm::ZebrafishHMM_G3_Sym_Full)
     return hmm
 end
 
-function StatsAPI.fit!(hmm::ZebrafishHMM_G3_Sym_Full, init_count, trans_count, obs_seq, state_marginals)
+function StatsAPI.fit!(
+    hmm::ZebrafishHMM_G3_Sym_Full, init_count, trans_count,
+    obs_seq::AbstractVector{ZebrafishHMM_G3_Sym_Full_Obs}, state_marginals
+)
     @assert length(init_count) == 3
     @assert size(trans_count) == (3, 3)
 
@@ -172,6 +194,18 @@ function StatsAPI.fit!(hmm::ZebrafishHMM_G3_Sym_Full, init_count, trans_count, o
     end
 
     return hmm
+end
+
+function load_full_obs(temperature::Int)
+    data = load_behaviour_free_swimming_data(temperature)
+
+    angles_trajs = [filter(!isnan, traj) for traj = eachcol(data.dtheta)]
+    displacements_trajs = [filter(!isnan, traj) for traj = eachcol(data.displacements)]
+    interboutintervals_trajs = [filter(!isnan, traj) for traj = eachcol(data.interboutintervals)]
+
+    @assert map(length, interboutintervals_trajs) == map(length, displacements_trajs) == map(length, angles_trajs)
+
+    return [map(ZebrafishHMM_G3_Sym_Full_Obs, traj...) for traj = zip(angles_trajs, displacements_trajs, interboutintervals_trajs)]
 end
 
 # function save_hmm(path::AbstractString, hmm::ZebrafishHMM_G3_Sym_Full)
