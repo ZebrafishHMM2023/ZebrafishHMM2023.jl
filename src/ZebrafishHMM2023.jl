@@ -21,6 +21,7 @@ using SpecialFunctions: logerfcx, erfcx
 using StaticArrays: SMatrix, @SMatrix, @SVector
 using Statistics: mean, std, middle
 using StatsAPI: fit
+using LogarithmicNumbers: LogFloat64
 
 include("artifacts.jl")
 include("missing.jl")
@@ -45,6 +46,7 @@ include("models/trunc_norm/hmm_tn4.jl")
 include("models/elife2020/elife2020.jl")
 include("models/elife2020/elife2020_gamma.jl")
 include("models/artr/hmm_artr.jl")
+include("models/artr/hmm_artr_log.jl")
 include("models/artr/hmm_artr_3_sym.jl")
 include("models/full_traj_models/hmm_g3_sym_full.jl")
 

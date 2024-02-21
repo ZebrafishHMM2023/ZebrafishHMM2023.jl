@@ -1,7 +1,7 @@
 struct HMM_ARTR <: HiddenMarkovModels.AbstractHMM
     transition_matrix::Matrix{Float64} # T[i,j] = P(i -> j)
     h::Matrix{Float64} # h[:,i] = fields in hidden state 'i'
-    pinit::AbstractVector{Float64} # initial state probabilities
+    pinit::Vector{Float64} # initial state probabilities
     pseudocount::Float64 # pseudocount for the inference of 'h'
     function HMM_ARTR(transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, pinit::AbstractVector{<:Real}, pseudocount::Float64)
         @assert length(pinit) == size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2)
