@@ -83,3 +83,50 @@ function load_hmm(path::AbstractString, ::Type{HMM_ARTR})
         return HMM_ARTR(transition_matrix, h, pinit, h_abs_max)
     end
 end
+
+
+#= The Viterbi from HiddenMarkovModels was failing, I think because of numerical
+issues. Here I did a version just for this HMM class. =#
+
+function viterbi_artr(hmm::HMM_ARTR, data::AbstractMatrix)
+    Ntimes = size(data, 2)
+    Nstates = size(hmm.h, 2)
+    @assert size(hmm.h, 1) == size(data, 1) # number of neurons
+    @assert size(hmm.transition_matrix) == (Nstates, Nstates)
+
+    log_E = hmm.h' * data .- sum(log1pexp, hmm.h; dims=1)' # emission probs of data, E[z,t] = Prob(data[t] | z)
+    log_Ω = log.(hmm.transition_matrix) # Ω[z,z'] = Prob(z -> z')
+    @assert size(log_E) == (Nstates, Ntimes)
+
+    logM = zeros(Nstates, Nstates, Ntimes) # log(M[z, z', t]), with z -> z'
+    logM .= reshape(log_E, 1, Nstates, Ntimes)
+    logM[:, :, 1] .+= reshape(log.(hmm.pinit), 1, Nstates)
+    logM[:, :, 2:end] .+= reshape(log_Ω, Nstates, Nstates, 1)
+
+    # zstar[z,t] = optimal 'z' at time 't', as function of the best 'z' at t+1
+    zstar = zeros(Int, Nstates, Ntimes)
+
+    # stores log-likelihood of (some) paths
+    ll = copy(logM) # ll[z,z',t]
+
+    # forward pass
+    for t = 2:Ntimes
+        if t == 2
+            ll[:, :, t] .+= logM[:, :, 1]
+        elseif t > 2
+            for z = 1:Nstates
+                ll[z, :, t] .+= logM[zstar[z, t - 2], z, t - 1]
+            end
+        end
+        zstar[:, t - 1] .= vec(first.(Tuple.(argmax(ll[:, :, t]; dims=1))))
+    end
+
+    # backward pass
+    z_max = zeros(Int, Ntimes)
+    z_max[end] = argmax([ll[zstar[z, end - 1], z, end] for z = 1:Nstates])
+    for t = reverse(1:Ntimes - 1)
+        z_max[t] = zstar[z_max[t + 1], t]
+    end
+
+    return z_max
+end

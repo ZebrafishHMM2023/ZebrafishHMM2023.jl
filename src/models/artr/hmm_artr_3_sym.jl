@@ -1,3 +1,5 @@
+# Here we try to enforce that the 3rd state has the same mean field in the left and right sides.
+# Thus resembling a "forward" state.
 struct HMM_ARTR_3_SYM <: HiddenMarkovModels.AbstractHMM
     transition_matrix::Matrix{Float64} # T[i,j] = P(i -> j)
     h::Matrix{Float64} # h[:,i] = fields in hidden state 'i'
@@ -62,23 +64,72 @@ function StatsAPI.fit!(hmm::HMM_ARTR_3_SYM, init_count::AbstractVector, trans_co
     return hmm
 end
 
-function save_hmm(path::AbstractString, hmm::HMM_ARTR)
-    h5open(path, "w") do h5
-        write(h5, "type", "HMM_ARTR")
-        write(h5, "transition_matrix", hmm.transition_matrix)
-        write(h5, "h", hmm.h)
-        write(h5, "pinit", hmm.pinit)
-        write(h5, "h_abs_max", [h_abs_max])
+# function save_hmm(path::AbstractString, hmm::HMM_ARTR)
+#     h5open(path, "w") do h5
+#         write(h5, "type", "HMM_ARTR")
+#         write(h5, "transition_matrix", hmm.transition_matrix)
+#         write(h5, "h", hmm.h)
+#         write(h5, "pinit", hmm.pinit)
+#         write(h5, "h_abs_max", [h_abs_max])
+#     end
+# end
+
+# function load_hmm(path::AbstractString, ::Type{HMM_ARTR})
+#     h5open(path, "r") do h5
+#         read(h5, "type") == "HMM_ARTR" || throw(ArgumentError("HMM type missmatch"))
+#         transition_matrix = read(h5, "transition_matrix")
+#         h = read(h5, "h")
+#         pinit = read(h5, "pinit")
+#         h_abs_max = only(read(h5, "h_abs_max"))
+#         return HMM_ARTR(transition_matrix, h, pinit, h_abs_max)
+#     end
+# end
+
+function _find_root_for_artr_sym(q1::AbstractVector, q2::AbstractVector; maxiters::Int=10, )
+    L1 = length(q1)
+    L2 = length(q2)
+
+    # bounds
+    lb, ub = _find_root_for_artr_sym_bounds(q1, q2)
+
+    # initial value
+    λ0 = middle(lb, ub)
+
+    for iter = 1:maxiters
+        lhs = mean(log, (q1 .+ λ/L1) / (1 .- q1 .- λ/L1))
+        rhs = mean(log, (q2 .- λ/L2) / (1 .- q2 .- λ/L2))
+        if lhs < rhs
+
+        end
     end
 end
 
-function load_hmm(path::AbstractString, ::Type{HMM_ARTR})
-    h5open(path, "r") do h5
-        read(h5, "type") == "HMM_ARTR" || throw(ArgumentError("HMM type missmatch"))
-        transition_matrix = read(h5, "transition_matrix")
-        h = read(h5, "h")
-        pinit = read(h5, "pinit")
-        h_abs_max = only(read(h5, "h_abs_max"))
-        return HMM_ARTR(transition_matrix, h, pinit, h_abs_max)
-    end
+function _find_root_for_artr_sym_f(q1::AbstractVector, q2::AbstractVector, λ::Real)
+    L1 = length(q1)
+    L2 = length(q2)
+
+    lhs = mean(log, (q1 .+ λ/L1) ./ (1 .- q1 .- λ/L1))
+    rhs = mean(log, (q2 .- λ/L2) ./ (1 .- q2 .+ λ/L2))
+
+    return lhs - rhs
+end
+
+function _find_root_for_artr_sym_bounds(q1::AbstractVector, q2::AbstractVector)
+    L1 = length(q1)
+    L2 = length(q2)
+
+    lb = max(-minimum(q1) * L1, -(1 - maximum(q2)) * L2)
+    ub = min((1 - maximum(q1)) * L1, minimum(q2) * L2)
+
+    return lb, ub
+end
+
+function _find_root_for_artr_sym_df(q1::AbstractVector, q2::AbstractVector, λ::Real)
+    L1 = length(q1)
+    L2 = length(q2)
+
+    lhs = sum(inv, (L1 * (1 .- q1) .- λ) .* (L1 .* q1 .+ λ))
+    rhs = sum(inv, (L2 * (1 .- q2) .+ λ) .* (L2 .* q2 .- λ))
+
+    return lhs + rhs
 end
