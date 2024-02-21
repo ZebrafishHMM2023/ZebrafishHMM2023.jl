@@ -1,6 +1,7 @@
 using Statistics: mean
 using Test: @test, @testset
-using ZebrafishHMM2023: load_artr_wolf_2023, HMM_ARTR, artr_wolf_2023_temperatures
+using MAT: matread
+using ZebrafishHMM2023: artr_wolf_2023, load_artr_wolf_2023, artr_wolf_2023_mat, HMM_ARTR, artr_wolf_2023_temperatures, artr_wolf_2023_fishes
 
 @testset "artr_wolf_2023" begin
     for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(; temperature)
