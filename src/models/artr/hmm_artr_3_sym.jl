@@ -1,46 +1,37 @@
-struct HMM_ARTR <: HiddenMarkovModels.AbstractHMM
+struct HMM_ARTR_3_SYM <: HiddenMarkovModels.AbstractHMM
     transition_matrix::Matrix{Float64} # T[i,j] = P(i -> j)
     h::Matrix{Float64} # h[:,i] = fields in hidden state 'i'
     pinit::AbstractVector{Float64} # initial state probabilities
+    L::Int # number of left neurons
     pseudocount::Float64 # pseudocount for the inference of 'h'
-    function HMM_ARTR(transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, pinit::AbstractVector{<:Real}, pseudocount::Float64)
+    function HMM_ARTR_3_SYM(transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, pinit::AbstractVector{<:Real}, L::Int, pseudocount::Float64)
         @assert length(pinit) == size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2)
         @assert all(≥(0), transition_matrix)
         @assert all(≈(1), sum(transition_matrix; dims=2))
         @assert all(≥(0), pinit)
         @assert sum(pinit) ≈ 1
         @assert pseudocount ≥ 0
-        return new(transition_matrix, h, pinit, pseudocount)
+        @assert length(pinit) == 3 # only 3 states
+        @assert 0 ≤ L ≤ size(h, 1)
+        return new(transition_matrix, h, pinit, L, pseudocount)
     end
 end
 
-struct NeuronsBinaryDistribution{V <: AbstractVector}
-    h::V
-end
-
-function HMM_ARTR(transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, pseudocount::Real=0.0)
+function HMM_ARTR_3_SYM(transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, L::Int, pseudocount::Real=0.0)
     @assert size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2)
     pinit = ones(size(transition_matrix, 1)) / size(transition_matrix, 1)
-    return HMM_ARTR(transition_matrix, h, pinit, pseudocount)
+    return HMM_ARTR_3_SYM(transition_matrix, h, pinit, L, pseudocount)
 end
 
-function Base.rand(rng::AbstractRNG, d::NeuronsBinaryDistribution)
-    return rand.(rng) .< logistic.(d.h)
-end
+Base.length(hmm::HMM_ARTR_3_SYM) = size(hmm.transition_matrix, 1) # number of hidden states
+HiddenMarkovModels.transition_matrix(hmm::HMM_ARTR_3_SYM) = hmm.transition_matrix
+HiddenMarkovModels.initial_distribution(hmm::HMM_ARTR_3_SYM) = hmm.pinit
 
-function DensityInterface.logdensityof(d::NeuronsBinaryDistribution, x::AbstractVector{<:Real})
-    return dot(d.h, x) - sum(log1pexp, d.h)
-end
-
-Base.length(hmm::HMM_ARTR) = size(hmm.transition_matrix, 1) # number of hidden states
-HiddenMarkovModels.transition_matrix(hmm::HMM_ARTR) = hmm.transition_matrix
-HiddenMarkovModels.initial_distribution(hmm::HMM_ARTR) = hmm.pinit
-
-function HiddenMarkovModels.obs_distribution(hmm::HMM_ARTR, i::Int)
+function HiddenMarkovModels.obs_distribution(hmm::HMM_ARTR_3_SYM, i::Int)
     return NeuronsBinaryDistribution(view(hmm.h, :, i))
 end
 
-function StatsAPI.fit!(hmm::HMM_ARTR, init_count::AbstractVector, trans_count::AbstractMatrix, obs_seq::AbstractVector, state_marginals::AbstractMatrix)
+function StatsAPI.fit!(hmm::HMM_ARTR_3_SYM, init_count::AbstractVector, trans_count::AbstractMatrix, obs_seq::AbstractVector, state_marginals::AbstractMatrix)
     @assert length(init_count) == length(hmm)
     @assert size(trans_count) == (length(hmm), length(hmm))
     @assert size(state_marginals) == (length(hmm), length(obs_seq))
@@ -60,6 +51,14 @@ function StatsAPI.fit!(hmm::HMM_ARTR, init_count::AbstractVector, trans_count::A
     @assert all(0 .≤ q .≤ 1)
 
     hmm.h .= log.(q)
+
+    # We impose that the 3rd state has the same mean field in the left and right sides
+    mean_1 = mean(hmm.h[begin:hmm.L, 3])
+    mean_2 = mean(hmm.h[hmm.L + 1:end, 3])
+
+    hmm.h[begin:hmm.L, 3] .-= mean_2
+    hmm.h[hmm.L + 1:end, 3] .-= mean_1
+
     return hmm
 end
 
