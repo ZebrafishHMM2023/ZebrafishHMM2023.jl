@@ -9,13 +9,15 @@ mutable struct ZebrafishHMM_G3_Sym_Full <: HiddenMarkovModels.AbstractHMM
     turn_interboutinterval::Gamma{Float64}
     min_alpha::Float64
 
+    only_train_spacetime::Bool # freezes parameters ineferrable from bout angles:s transition_matrix, pinit_turn, ...
+
     function ZebrafishHMM_G3_Sym_Full(
         pinit_turn::Real,
         transition_matrix::AbstractMatrix{<:Real},
         σforw::Real, turn::Gamma{<:Real},
         forward_displacement::Gamma{<:Real}, turn_displacement::Gamma{<:Real},
         forward_interboutinterval::Gamma{<:Real}, turn_interboutinterval::Gamma{<:Real},
-        min_alpha::Float64 = 0.0
+        min_alpha::Float64 = 0.0; only_train_spacetime::Bool = false
     )
         size(transition_matrix) == (3, 3) || throw(ArgumentError("transition_matrix should be 3x3"))
         turn.α ≥ min_alpha || throw(ArgumentError("turn.α should be greater than min_turn_alpha"))
@@ -26,7 +28,7 @@ mutable struct ZebrafishHMM_G3_Sym_Full <: HiddenMarkovModels.AbstractHMM
         return new(
             pinit_turn, transition_matrix, σforw, turn,
             forward_displacement, turn_displacement,
-            forward_interboutinterval, turn_interboutinterval, min_alpha
+            forward_interboutinterval, turn_interboutinterval, min_alpha, only_train_spacetime
         )
     end
 end
@@ -37,12 +39,13 @@ function ZebrafishHMM_G3_Sym_Full(
     σforw::Real, turn::Gamma{<:Real},
     forward_displacement::Gamma{<:Real}, turn_displacement::Gamma{<:Real},
     forward_interboutinterval::Gamma{<:Real}, turn_interboutinterval::Gamma{<:Real},
-    min_alpha::Real = 0.0
+    min_alpha::Real = 0.0, only_train_spacetime::Bool = false
 )
     return ZebrafishHMM_G3_Sym_Full(
         pinit_turn, transition_matrix, σforw, turn,
         forward_displacement, turn_displacement,
-        forward_interboutinterval, turn_interboutinterval, min_alpha
+        forward_interboutinterval, turn_interboutinterval, min_alpha;
+        only_train_spacetime
     )
 end
 
@@ -137,36 +140,44 @@ function StatsAPI.fit!(
     @assert length(init_count) == 3
     @assert size(trans_count) == (3, 3)
 
-    #= Update initial state probabilities =#
-    hmm.pinit_turn = (init_count[2] + init_count[3]) / sum(init_count)
-
-    #= Update transition matrix =#
-    hmm.transition_matrix .= trans_count
-    normalize_transition_matrix!(hmm)
-
     θs = [obs.θ for obs in obs_seq]
     ds = [obs.d for obs in obs_seq]
     ts = [obs.t for obs in obs_seq]
 
-    #= Update forward emission probabilities. Forward angles are always centered at μ = 0 =#
-    hmm.σforw = fit_mle(Normal, θs, state_marginals[1,:]; mu = 0.0).σ
+    #= If hmm.only_train_spacetime is true, we only train the space-time components
+    (displacements, interbout times). =#
+    if !hmm.only_train_spacetime
+        #= Update initial state probabilities =#
+        hmm.pinit_turn = (init_count[2] + init_count[3]) / sum(init_count)
 
-    #= Update left-right turn emission probabilities. =#
-    @assert iszero(state_marginals[2, findall(θs .> 0)])
-    @assert iszero(state_marginals[3, findall(θs .< 0)])
+        #= Update transition matrix =#
+        hmm.transition_matrix .= trans_count / sum(trans_count; dims=2)
 
-    turn_obs = [
-        -θs[(θs .< 0) .& (state_marginals[2,:] .> 0)];
-        +θs[(θs .> 0) .& (state_marginals[3,:] .> 0)]
-    ]
-    turn_marginals = [
-        state_marginals[2, (θs .< 0) .& (state_marginals[2,:] .> 0)];
-        state_marginals[3, (θs .> 0) .& (state_marginals[3,:] .> 0)]
-    ]
-    @assert all(>(0), turn_obs)
-    @assert all(>(0), turn_marginals)
+        #= Update forward emission probabilities. Forward angles are always centered at μ = 0 =#
+        hmm.σforw = fit_mle(Normal, θs, state_marginals[1,:]; mu = 0.0).σ
 
-    hmm.turn = fit_mle(typeof(hmm.turn), turn_obs, turn_marginals)
+        #= Update left-right turn emission probabilities. =#
+        @assert iszero(state_marginals[2, findall(θs .> 0)])
+        @assert iszero(state_marginals[3, findall(θs .< 0)])
+
+        turn_obs = [
+            -θs[(θs .< 0) .& (state_marginals[2,:] .> 0)];
+            +θs[(θs .> 0) .& (state_marginals[3,:] .> 0)]
+        ]
+        turn_marginals = [
+            state_marginals[2, (θs .< 0) .& (state_marginals[2,:] .> 0)];
+            state_marginals[3, (θs .> 0) .& (state_marginals[3,:] .> 0)]
+        ]
+        @assert all(>(0), turn_obs)
+        @assert all(>(0), turn_marginals)
+
+        hmm.turn = fit_mle(typeof(hmm.turn), turn_obs, turn_marginals)
+
+        # enforce minimum alpha
+        if hmm.turn.α < hmm.min_alpha
+            hmm.turn = Gamma(hmm.min_alpha, hmm.turn.θ)
+        end
+    end
 
     # fit displacement emissions
     hmm.forward_displacement = fit_mle(typeof(hmm.forward_displacement), ds, state_marginals[1,:])
@@ -177,9 +188,6 @@ function StatsAPI.fit!(
     hmm.turn_interboutinterval = fit_mle(typeof(hmm.turn_interboutinterval), ts, state_marginals[2,:] + state_marginals[3,:])
 
     # enforce minimum alpha
-    if hmm.turn.α < hmm.min_alpha
-        hmm.turn = Gamma(hmm.min_alpha, hmm.turn.θ)
-    end
     if hmm.forward_displacement.α < hmm.min_alpha
         hmm.forward_displacement = Gamma(hmm.min_alpha, hmm.forward_displacement.θ)
     end
