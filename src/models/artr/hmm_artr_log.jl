@@ -50,3 +50,24 @@ function StatsAPI.fit!(hmm::HMM_ARTR_Log, init_count::AbstractVector, trans_coun
     hmm.h .= log.(q ./ (1 .- q))
     return hmm
 end
+
+function save_hmm(path::AbstractString, hmm::HMM_ARTR_Log)
+    h5open(path, "w") do h5
+        write(h5, "type", "HMM_ARTR_Log")
+        write(h5, "transition_matrix", float(hmm.transition_matrix))
+        write(h5, "h", float(hmm.h))
+        write(h5, "pinit", float(hmm.pinit))
+        write(h5, "pseudocount", [hmm.pseudocount])
+    end
+end
+
+function load_hmm(path::AbstractString, ::Type{HMM_ARTR_Log})
+    h5open(path, "r") do h5
+        read(h5, "type") == "HMM_ARTR_Log" || throw(ArgumentError("HMM type missmatch"))
+        transition_matrix = read(h5, "transition_matrix")
+        h = read(h5, "h")
+        pinit = read(h5, "pinit")
+        pseudocount = only(read(h5, "pseudocount"))
+        return HMM_ARTR_Log(transition_matrix, h, pinit, pseudocount)
+    end
+end
