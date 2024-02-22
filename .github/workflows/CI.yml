@@ -12,20 +12,11 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          # The default Julia compat for new packages is v1.9. The setting here should be in sync with that.
-          # I prefer to specify the minor version here (instead of just '1'), so as to be consistent with the
-          # stated compat bound.
-          - '1.9'
+          - '1.10'
         os:
-          # Ubuntu is the cheapest in terms of CI minutes
           - ubuntu-latest
         arch:
           - x64
-
-    # Note that below, all actions are pinned to their full commit SHA. This is recommended, see:
-    # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions.
-    # I should keep this template file updated with the commit SHA of the latest released version of each action.
-    # In turn, Dependabot helps updating already existing packages.
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - uses: julia-actions/setup-julia@ac0d62164df5a47de404f4e96ce86a1a28a28d56
