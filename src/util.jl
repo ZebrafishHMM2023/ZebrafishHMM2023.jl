@@ -15,3 +15,20 @@ function chunks(list, n::Int)
 end
 
 normalize_transition_matrix(T::AbstractMatrix) = T ./ sum(T; dims=2)
+
+"""
+    split_into_repeated_subsequences(seq)
+
+Splits `seq` into subsequences of repeated elements.
+"""
+function split_into_repeated_subsequences(seq::AbstractVector{Int})
+    subseqs = [Int[]]
+    for s = seq
+        if isempty(last(subseqs)) || s == last(last(subseqs))
+            push!(last(subseqs), s)
+        else
+            push!(subseqs, [s])
+        end
+    end
+    return subseqs
+end
