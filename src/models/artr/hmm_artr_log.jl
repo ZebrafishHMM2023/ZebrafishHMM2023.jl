@@ -47,6 +47,6 @@ function StatsAPI.fit!(hmm::HMM_ARTR_Log, init_count::AbstractVector, trans_coun
     q = (1 - λ) * obs_p .+ λ * 0.5
     @assert all(0 .≤ q .≤ 1)
 
-    hmm.h .= log.(q)
+    hmm.h .= log.(q ./ (1 .- q))
     return hmm
 end
