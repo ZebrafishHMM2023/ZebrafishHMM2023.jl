@@ -20,6 +20,7 @@ end
 @testset "find_repeats" begin
     @test find_repeats([1,1,2,2]) == [1:2, 3:4]
     @test find_repeats(Int[]) == [1:0]
+    @test find_repeats([1]) == [1:1]
     seq = reduce(vcat, [fill(rand(1:3), rand(1:20)) for _ = 1:20])
     reps = find_repeats(seq)
     @test reduce(vcat, reps) == 1:length(seq)
