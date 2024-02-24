@@ -1,4 +1,6 @@
-#= Dataset from Le Goc et al 2021, as prepared by Matteo. =#
+#= Dataset from Le Goc et al 2021, as prepared by Matteo.
+Originally from https://datadryad.org/stash/dataset/doi:10.5061/dryad.3r2280ggw, also
+https://gitlab.com/GuillaumeLeGoc/thermomasterlab =#
 function behaviour_free_swimming_hdf5_path()
     return joinpath(artifact"behaviour_free_swimming", "behaviour_free_swimming.h5")
 end

@@ -32,3 +32,20 @@ function split_into_repeated_subsequences(seq::AbstractVector{Int})
     end
     return subseqs
 end
+
+"""
+    find_repeats(seq)
+
+Returns index ranges of repeated elements in `seq`.
+"""
+function find_repeats(seq::AbstractVector{Int})
+    repeats = [1:0]
+    for (n, s) = enumerate(seq)
+        if n == 1 || s == seq[n - 1]
+            repeats[end] = first(repeats[end]):n
+        else
+            push!(repeats, n:n)
+        end
+    end
+    return repeats
+end
