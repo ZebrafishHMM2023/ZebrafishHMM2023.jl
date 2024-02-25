@@ -1,4 +1,5 @@
 module aqua_tests include("aqua.jl") end
+module full_trajs_tests include("full_trajs.jl") end
 module wolf_artr_tests include("wolf_artr.jl") end
 module hmm_artr_3_sym_tests include("hmm_artr_3_sym.jl") end
 module hmm_artr_tests include("artr_hmm.jl") end
