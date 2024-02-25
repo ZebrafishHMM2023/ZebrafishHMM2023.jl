@@ -33,22 +33,6 @@ mutable struct ZebrafishHMM_G3_Sym_Full <: HiddenMarkovModels.AbstractHMM
     end
 end
 
-function ZebrafishHMM_G3_Sym_Full(
-    ; pinit_turn::Real,
-    transition_matrix::AbstractMatrix{<:Real},
-    σforw::Real, turn::Gamma{<:Real},
-    forward_displacement::Gamma{<:Real}, turn_displacement::Gamma{<:Real},
-    forward_interboutinterval::Gamma{<:Real}, turn_interboutinterval::Gamma{<:Real},
-    min_alpha::Real = 0.0, only_train_spacetime::Bool = false
-)
-    return ZebrafishHMM_G3_Sym_Full(
-        pinit_turn, transition_matrix, σforw, turn,
-        forward_displacement, turn_displacement,
-        forward_interboutinterval, turn_interboutinterval, min_alpha;
-        only_train_spacetime
-    )
-end
-
 struct ZebrafishHMM_G3_Sym_Full_Obs
     θ::Float64
     d::Float64
@@ -65,6 +49,22 @@ struct ZebrafishHMM_G3_Sym_Full_Emit_Distribution
     state_index::Int
 end
 
+function ZebrafishHMM_G3_Sym_Full(
+    ; pinit_turn::Real,
+    transition_matrix::AbstractMatrix{<:Real},
+    σforw::Real, turn::Gamma{<:Real},
+    forward_displacement::Gamma{<:Real}, turn_displacement::Gamma{<:Real},
+    forward_interboutinterval::Gamma{<:Real}, turn_interboutinterval::Gamma{<:Real},
+    min_alpha::Real = 0.0, only_train_spacetime::Bool = false
+)
+    return ZebrafishHMM_G3_Sym_Full(
+        pinit_turn, transition_matrix, σforw, turn,
+        forward_displacement, turn_displacement,
+        forward_interboutinterval, turn_interboutinterval, min_alpha;
+        only_train_spacetime
+    )
+end
+
 function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_G3_Sym_Full, state_index::Int)
     return ZebrafishHMM_G3_Sym_Full_Emit_Distribution(
         hmm.σforw, hmm.turn,
@@ -75,17 +75,18 @@ function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_G3_Sym_Full, stat
 end
 
 function Base.rand(rng::AbstractRNG, d::ZebrafishHMM_G3_Sym_Full_Emit_Distribution)
-    if d.state_index == 1
+    if d.state_index == 1 # forward
         θ = rand(rng, Normal(0, hmm.σforw))
         d = rand(rng, d.forward_displacement)
         t = rand(rng, d.forward_interboutinterval)
-    else
-        θ = rand(rng, d.turn)
+    else # turn
+        if d.state_index == 2 # left
+            θ = -rand(rng, d.turn)
+        elseif d.state_index == 3 # right
+            θ = +rand(rng, d.turn)
+        end
         d = rand(rng, d.turn_displacement)
         t = rand(rng, d.turn_interboutinterval)
-        if d.state_index == 2
-            θ = -θ # left
-        end
     end
     return ZebrafishHMM_G3_Sym_Full_Obs(θ, d, t)
 end
@@ -99,7 +100,7 @@ function DensityInterface.logdensityof(d::ZebrafishHMM_G3_Sym_Full_Emit_Distribu
         if d.state_index == 2
             lpdf_θ = logdensityof(d.turn, -obs.θ) # left
         elseif d.state_index == 3
-            lpdf_θ = logdensityof(d.turn, obs.θ) # right
+            lpdf_θ = logdensityof(d.turn, +obs.θ) # right
         end
         lpdf_d = logdensityof(d.turn_displacement, obs.d)
         lpdf_t = logdensityof(d.turn_interboutinterval, obs.t)
