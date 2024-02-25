@@ -74,19 +74,19 @@ function HiddenMarkovModels.obs_distribution(hmm::ZebrafishHMM_G3_Sym_Full, stat
     )
 end
 
-function Base.rand(rng::AbstractRNG, d::ZebrafishHMM_G3_Sym_Full_Emit_Distribution)
-    if d.state_index == 1 # forward
-        θ = rand(rng, Normal(0, hmm.σforw))
-        d = rand(rng, d.forward_displacement)
-        t = rand(rng, d.forward_interboutinterval)
+function Base.rand(rng::AbstractRNG, dist::ZebrafishHMM_G3_Sym_Full_Emit_Distribution)
+    if dist.state_index == 1 # forward
+        θ = rand(rng, Normal(0, dist.σforw))
+        d = rand(rng, dist.forward_displacement)
+        t = rand(rng, dist.forward_interboutinterval)
     else # turn
-        if d.state_index == 2 # left
-            θ = -rand(rng, d.turn)
-        elseif d.state_index == 3 # right
-            θ = +rand(rng, d.turn)
+        if dist.state_index == 2 # left
+            θ = -rand(rng, dist.turn)
+        elseif dist.state_index == 3 # right
+            θ = +rand(rng, dist.turn)
         end
-        d = rand(rng, d.turn_displacement)
-        t = rand(rng, d.turn_interboutinterval)
+        d = rand(rng, dist.turn_displacement)
+        t = rand(rng, dist.turn_interboutinterval)
     end
     return ZebrafishHMM_G3_Sym_Full_Obs(θ, d, t)
 end
