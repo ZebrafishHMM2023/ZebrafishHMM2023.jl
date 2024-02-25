@@ -152,7 +152,7 @@ function StatsAPI.fit!(
         hmm.pinit_turn = (init_count[2] + init_count[3]) / sum(init_count)
 
         #= Update transition matrix =#
-        hmm.transition_matrix .= trans_count / sum(trans_count; dims=2)
+        hmm.transition_matrix .= trans_count ./ sum(trans_count; dims=2)
 
         #= Update forward emission probabilities. Forward angles are always centered at μ = 0 =#
         hmm.σforw = fit_mle(Normal, θs, state_marginals[1,:]; mu = 0.0).σ
