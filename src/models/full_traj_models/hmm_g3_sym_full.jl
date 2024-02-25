@@ -237,3 +237,24 @@ end
 #         return ZebrafishHMM_G3_Sym(pinit_turn, transition_matrix, σforw, Gamma(turn_params...))
 #     end
 # end
+
+"""
+    to_spatiotemporal_trajectory(traj::AbstractVector{ZebrafishHMM_G3_Sym_Full_Obs})
+
+Converts a sequence of observations (bout angles, bout displacements, and interbout time intervals)
+into a spatiotemporal trajectories (x, y, t).
+"""
+function to_spatiotemporal_trajectory(traj::AbstractVector{ZebrafishHMM_G3_Sym_Full_Obs})
+    pts = zeros(length(traj), 3)
+    θs = zeros(length(traj))
+    for (t, obs) = enumerate(traj)
+        if t > firstindex(traj)
+            θs[t] = θs[t - 1]
+            pts[t, :] .= pts[t - 1, :]
+        end
+        θs[t] += obs.θ
+        pts[t, 3] += obs.t
+        pts[t, 1:2] .+= obs.d .* sincos(deg2rad(θs[t]))
+    end
+    return pts
+end

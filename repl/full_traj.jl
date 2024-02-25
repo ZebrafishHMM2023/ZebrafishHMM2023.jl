@@ -15,4 +15,4 @@ hmm = ZebrafishHMM_G3_Sym_Full(;
 (hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 500, check_loglikelihood_increasing = false, atol = ATol(1e-7))
 hmm
 
-rand(hmm, 10)
+rand(hmm, 100)
