@@ -218,6 +218,20 @@ function load_full_obs(temperature::Int)
     return [map(ZebrafishHMM_G3_Sym_Full_Obs, traj...) for traj = zip(angles_trajs, displacements_trajs, interboutintervals_trajs)]
 end
 
+# load long single fish long trajectories
+function legoc2021_single_fish_T26_full_obs()
+    mat = matread(legoc2021_single_fish_T26_path())
+
+    angles_trajs = [[filter(!isnan, traj) for traj = eachcol(trajs)] for trajs = vec(mat["dtheta"])]
+    displacements_trajs = [[filter(!isnan, traj) for traj = eachcol(trajs)] for trajs = vec(mat["displacements"])]
+    interboutintervals_trajs = [[filter(!isnan, traj) for traj = eachcol(trajs)] for trajs = vec(mat["interboutintervals"])]
+
+    @assert length(angles_trajs) == length(displacements_trajs) == length(interboutintervals_trajs) == 18 # number of fish
+    @assert map(length, interboutintervals_trajs) == map(length, displacements_trajs) == map(length, angles_trajs)
+
+    return [[map(ZebrafishHMM_G3_Sym_Full_Obs, traj...) for traj = zip(angles_trajs[fish], displacements_trajs[fish], interboutintervals_trajs[fish])] for fish = 1:18]
+end
+
 # function save_hmm(path::AbstractString, hmm::ZebrafishHMM_G3_Sym_Full)
 #     h5open(path, "w") do h5
 #         write(h5, "type", "ZebrafishHMM_G3_Sym")
