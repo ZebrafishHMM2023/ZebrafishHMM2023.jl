@@ -153,6 +153,7 @@ function StatsAPI.fit!(
 
         #= Update transition matrix =#
         hmm.transition_matrix .= trans_count ./ sum(trans_count; dims=2)
+        normalize_transition_matrix!(hmm) # left/right symmetry
 
         #= Update forward emission probabilities. Forward angles are always centered at μ = 0 =#
         hmm.σforw = fit_mle(Normal, θs, state_marginals[1,:]; mu = 0.0).σ
