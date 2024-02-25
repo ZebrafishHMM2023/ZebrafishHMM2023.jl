@@ -10,7 +10,7 @@ import NonlinearSolve
 
 using DampedUpdates: damp
 using DensityInterface: logdensityof
-using Distributions: Normal, Gamma, AffineDistribution, truncated, fit_mle, params
+using Distributions: Normal, Gamma, AffineDistribution, truncated, fit_mle, params, Exponential
 using HDF5: h5open, attrs
 using LazyArtifacts: LazyArtifacts, @artifact_str
 using LinearAlgebra: eigvecs, dot, normalize
@@ -49,5 +49,6 @@ include("models/artr/hmm_artr.jl")
 include("models/artr/hmm_artr_log.jl")
 include("models/artr/hmm_artr_3_sym.jl")
 include("models/full_traj_models/hmm_g3_sym_full.jl")
+include("models/full_traj_models/hmm_g3_sym_full_exp.jl")
 
 end
