@@ -71,3 +71,32 @@ function load_hmm(path::AbstractString, ::Type{HMM_ARTR_Log})
         return HMM_ARTR_Log(transition_matrix, h, pinit, pseudocount)
     end
 end
+
+function easy_train_artr_hmm(
+    ; temperature::Int, fish::Int, nstates::Int = 3, verbose::Bool=false,
+    max_iterations = 200, atol = 1e-7
+)
+    verbose && println("Training on temperature = $temperature, fish = $fish ...")
+
+    data = load_artr_wolf_2023(; temperature, fish)
+    trajs = collect(eachcol(vcat(data.left, data.right)))
+
+    Nleft = size(data.left, 1)
+    Nright = size(data.right, 1)
+    Nneurons = Nleft + Nright
+
+    hmm = HMM_ARTR_Log(normalize_transition_matrix(rand(nstates, nstates)), randn(Nneurons, nstates), 5.0)
+    (hmm, lL) = HiddenMarkovModels.baum_welch(
+        hmm, trajs; max_iterations, check_loglikelihood_increasing = false, atol = ATol(atol)
+    )
+
+    # identify states corresponding to L, R, F
+    Rstate, Fstate, Lstate = sortperm([mean(hmm.h[1:Nleft, z]) - mean(hmm.h[Nleft + 1:end, z]) for z = 1:3])
+
+    # sort states (F = 1, L = 2, R = 3)
+    hmm.transition_matrix .= hmm.transition_matrix[[Fstate, Lstate, Rstate], [Fstate, Lstate, Rstate]]
+    hmm.h .= hmm.h[:, [Fstate, Lstate, Rstate]]
+    hmm.pinit .= hmm.pinit[[Fstate, Lstate, Rstate]]
+
+    return (; hmm, lL)
+end

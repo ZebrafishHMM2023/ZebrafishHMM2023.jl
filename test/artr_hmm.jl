@@ -1,7 +1,10 @@
 using Statistics: mean
 using Test: @test, @testset
 using MAT: matread
-using ZebrafishHMM2023: artr_wolf_2023, load_artr_wolf_2023, artr_wolf_2023_mat, HMM_ARTR, artr_wolf_2023_temperatures, artr_wolf_2023_fishes
+using HiddenMarkovModels: logdensityof
+using ZebrafishHMM2023: artr_wolf_2023, load_artr_wolf_2023, artr_wolf_2023_mat, HMM_ARTR,
+    artr_wolf_2023_temperatures, artr_wolf_2023_fishes,
+    easy_train_artr_hmm
 
 @testset "artr_wolf_2023" begin
     for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(; temperature)
@@ -34,4 +37,12 @@ using ZebrafishHMM2023: artr_wolf_2023, load_artr_wolf_2023, artr_wolf_2023_mat,
         @test data2.time == ts
         @test data2.temperature == data["T"]
     end
+end
+
+@testset "easy_train_artr_hmm" begin
+    data = load_artr_wolf_2023(; temperature=18, fish=12)
+    trajs = collect(eachcol(vcat(data.left, data.right)))
+
+    hmm, lL = easy_train_artr_hmm(; temperature=18, fish=12, verbose=false, atol=1e-5)
+    @test logdensityof(hmm, trajs) ≈ lL[end]
 end
