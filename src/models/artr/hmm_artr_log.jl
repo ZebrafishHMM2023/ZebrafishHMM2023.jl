@@ -74,7 +74,7 @@ end
 
 function easy_train_artr_hmm(
     ; temperature::Int, fish::Int, nstates::Int = 3, verbose::Bool=false,
-    max_iterations = 200, atol = 1e-7
+    max_iterations = 200, atol = 1e-7, pseudocount=5.0
 )
     verbose && println("Training on temperature = $temperature, fish = $fish ...")
 
@@ -85,7 +85,7 @@ function easy_train_artr_hmm(
     Nright = size(data.right, 1)
     Nneurons = Nleft + Nright
 
-    hmm = HMM_ARTR_Log(normalize_transition_matrix(rand(nstates, nstates)), randn(Nneurons, nstates), 5.0)
+    hmm = HMM_ARTR_Log(normalize_transition_matrix(rand(nstates, nstates)), randn(Nneurons, nstates), pseudocount)
     (hmm, lL) = HiddenMarkovModels.baum_welch(
         hmm, trajs; max_iterations, check_loglikelihood_increasing = false, atol = ATol(atol)
     )
