@@ -3,11 +3,10 @@ using Test: @test, @testset
 using MAT: matread
 using HiddenMarkovModels: logdensityof
 using ZebrafishHMM2023: artr_wolf_2023, load_artr_wolf_2023, artr_wolf_2023_mat, HMM_ARTR,
-    artr_wolf_2023_temperatures, artr_wolf_2023_fishes,
-    easy_train_artr_hmm
+    artr_wolf_2023_temperatures, artr_wolf_2023_fishes, easy_train_artr_hmm
 
 @testset "artr_wolf_2023" begin
-    for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(; temperature)
+    for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(temperature)
         @test only(keys(matread(artr_wolf_2023_mat(; temperature=18, fish=12)))) == "Dinference_corr"
         data = artr_wolf_2023(; temperature, fish)
         if temperature == 26

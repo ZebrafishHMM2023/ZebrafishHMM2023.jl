@@ -4,8 +4,17 @@ using Statistics: mean
 using ZebrafishHMM2023: artr_wolf_2023, artr_wolf_2023_mat, artr_wolf_2023_temperatures,
     artr_wolf_2023_fishes, load_artr_wolf_2023
 
+@testset "artr_wolf_2023 temperatures and fishes" begin
+    for fish = artr_wolf_2023_fishes(), T = artr_wolf_2023_temperatures(fish)
+        @test fish ∈ artr_wolf_2023_fishes(T)
+    end
+    for T = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(T)
+        @test T ∈ artr_wolf_2023_temperatures(fish)
+    end
+end
+
 @testset "artr_wolf_2023" begin
-    for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(; temperature)
+    for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(temperature)
         @test only(keys(matread(artr_wolf_2023_mat(; temperature=18, fish=12)))) == "Dinference_corr"
         data = artr_wolf_2023(; temperature, fish)
         if temperature == 26
