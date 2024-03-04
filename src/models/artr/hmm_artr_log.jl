@@ -29,7 +29,9 @@ function HMM_ARTR_Log(
     return HMM_ARTR_Log(transition_matrix, h, pinit, pseudocount)
 end
 
-Base.length(hmm::HMM_ARTR_Log) = size(hmm.transition_matrix, 1) # number of hidden states
+# number of hidden states
+Base.length(hmm::HMM_ARTR_Log) = size(hmm.transition_matrix, 1)
+
 HiddenMarkovModels.transition_matrix(hmm::HMM_ARTR_Log) = hmm.transition_matrix
 HiddenMarkovModels.initial_distribution(hmm::HMM_ARTR_Log) = hmm.pinit
 
@@ -37,7 +39,13 @@ function HiddenMarkovModels.obs_distribution(hmm::HMM_ARTR_Log, i::Int)
     return NeuronsBinaryDistribution(view(hmm.h, :, i))
 end
 
-function StatsAPI.fit!(hmm::HMM_ARTR_Log, init_count::AbstractVector, trans_count::AbstractMatrix, obs_seq::AbstractVector, state_marginals::AbstractMatrix)
+function StatsAPI.fit!(
+    hmm::HMM_ARTR_Log,
+    init_count::AbstractVector,
+    trans_count::AbstractMatrix,
+    obs_seq::AbstractVector,
+    state_marginals::AbstractMatrix
+)
     @assert length(init_count) == length(hmm)
     @assert size(trans_count) == (length(hmm), length(hmm))
     @assert size(state_marginals) == (length(hmm), length(obs_seq))
