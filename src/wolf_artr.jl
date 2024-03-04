@@ -43,3 +43,8 @@ function load_artr_wolf_2023(; temperature, fish)
         temperature = dict["T"]
     )
 end
+
+#= Distances between the neurons. Data kindly provided by S. Wolf (personal communication) =#
+function artr_wolf_2023_distances_folder()
+    return @artifact_str("Wolf_ARTR_2023_Distances")
+end
