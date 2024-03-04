@@ -19,7 +19,11 @@ struct HMM_ARTR_Log <: HiddenMarkovModels.AbstractHMM
     end
 end
 
-function HMM_ARTR_Log(transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, pseudocount::Real=0.0)
+function HMM_ARTR_Log(
+    transition_matrix::AbstractMatrix{<:Real},
+    h::AbstractMatrix{<:Real},
+    pseudocount::Real = 0.0
+)
     @assert size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2)
     pinit = ones(size(transition_matrix, 1)) / size(transition_matrix, 1)
     return HMM_ARTR_Log(transition_matrix, h, pinit, pseudocount)
