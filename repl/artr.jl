@@ -1,12 +1,17 @@
-import Makie
 import CairoMakie
-
+import Makie
 using HiddenMarkovModels: logdensityof, baum_welch, transition_matrix, initial_distribution, viterbi
 using Statistics: mean
 using Test: @test, @testset
-using ZebrafishHMM2023: load_artr_wolf_2023, HMM_ARTR, normalize_transition_matrix, ATol,
-    viterbi_artr, easy_train_artr_hmm
+using ZebrafishHMM2023: ATol
+using ZebrafishHMM2023: easy_train_artr_hmm
+using ZebrafishHMM2023: HMM_ARTR
+using ZebrafishHMM2023: load_artr_wolf_2023
+using ZebrafishHMM2023: normalize_transition_matrix
+using ZebrafishHMM2023: viterbi_artr
+using ZebrafishHMM2023: artr_wolf_2023_folder
 
+artr_wolf_2023_folder(18)
 
 hmm = HMM_ARTR([0.75 0.25; 0.25 0.75], randn(326, 2), 0.1)
 (hmm, lL) = baum_welch(hmm, trajs; max_iterations = 500, check_loglikelihood_increasing = false, atol = ATol(1e-7))

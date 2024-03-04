@@ -48,3 +48,10 @@ git-tree-sha1 = "b43e28ff20b4ed4aa2ea4c4a303c5494ad2dddc3"
     [[Wolf_ARTR_2023_T33.download]]
     sha256 = "f2d96281da15b52e0f13423767f07d8a30f041857e3be7aa4a1898379c0aa026"
     url = "https://gist.github.com/cossio/83a60973625bfd6231544c4cd7afce96/raw/b43e28ff20b4ed4aa2ea4c4a303c5494ad2dddc3.tar.gz"
+
+[Wolf_ARTR_2023_Distances]
+git-tree-sha1 = "f904e0318c4804aa75c2d0fe16f35ee3fb4fd8c8"
+
+    [[Wolf_ARTR_2023_Distances.download]]
+    sha256 = "b770e18f2fcc278bb18171975f7072fc7de9c0c9f21fc14c3cd632735e06af93"
+    url = "https://gist.github.com/cossio/b5b14d621757cd5bd3151e97ba2f60ed/raw/f904e0318c4804aa75c2d0fe16f35ee3fb4fd8c8.tar.gz"
