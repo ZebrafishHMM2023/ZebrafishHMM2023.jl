@@ -48,3 +48,11 @@ end
 function artr_wolf_2023_distances_folder()
     return @artifact_str("Wolf_ARTR_2023_Distances")
 end
+
+function artr_wolf_2023_distances_file(; temperature::Int, fish::Int)
+    return joinpath(artr_wolf_2023_distances_folder(), "dist_T$(temperature)_Fish $fish.mat")
+end
+
+function artr_wolf_2023_distances(; temperature::Int, fish::Int)
+    return matread(artr_wolf_2023_distances_file(; temperature, fish))["dist_"]
+end

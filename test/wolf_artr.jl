@@ -1,8 +1,13 @@
-using Test: @test, @testset
 using MAT: matread
 using Statistics: mean
-using ZebrafishHMM2023: artr_wolf_2023, artr_wolf_2023_mat, artr_wolf_2023_temperatures,
-    artr_wolf_2023_fishes, load_artr_wolf_2023
+using Test: @test, @testset
+using ZebrafishHMM2023: artr_wolf_2023
+using ZebrafishHMM2023: artr_wolf_2023_distances
+using ZebrafishHMM2023: artr_wolf_2023_distances_file
+using ZebrafishHMM2023: artr_wolf_2023_fishes
+using ZebrafishHMM2023: artr_wolf_2023_mat
+using ZebrafishHMM2023: artr_wolf_2023_temperatures
+using ZebrafishHMM2023: load_artr_wolf_2023
 
 @testset "artr_wolf_2023 temperatures and fishes" begin
     for fish = artr_wolf_2023_fishes(), T = artr_wolf_2023_temperatures(fish)
@@ -43,5 +48,17 @@ end
         @test data2.right == data["rightspikesbin_data"]'
         @test data2.time == ts
         @test data2.temperature == data["T"]
+    end
+end
+
+@testset "distances" begin
+    for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(temperature)
+        @test isfile(artr_wolf_2023_distances_file(; temperature, fish))
+        @test only(keys(matread(artr_wolf_2023_distances_file(; temperature=18, fish=14)))) == "dist_"
+
+        data = load_artr_wolf_2023(; temperature, fish)
+        Nneurons = size(data.left, 1) + size(data.right, 1)
+
+        @test size(artr_wolf_2023_distances(; temperature, fish)) == (Nneurons, Nneurons)
     end
 end
