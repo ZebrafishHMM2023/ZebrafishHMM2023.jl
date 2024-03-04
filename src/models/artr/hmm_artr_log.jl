@@ -3,7 +3,12 @@ struct HMM_ARTR_Log <: HiddenMarkovModels.AbstractHMM
     h::Matrix{Float64} # h[:,z] = fields in hidden state 'z'
     pinit::Vector{LogFloat64} # initial state probabilities
     pseudocount::Float64 # pseudocount for the inference of 'h'
-    function HMM_ARTR_Log(transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, pinit::AbstractVector{<:Real}, pseudocount::Float64)
+    function HMM_ARTR_Log(
+        transition_matrix::AbstractMatrix{<:Real},
+        h::AbstractMatrix{<:Real},
+        pinit::AbstractVector{<:Real},
+        pseudocount::Float64
+    )
         @assert length(pinit) == size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2)
         @assert all(≥(0), transition_matrix)
         @assert all(≈(1), sum(transition_matrix; dims=2))
