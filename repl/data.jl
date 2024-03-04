@@ -12,4 +12,3 @@ using LinearAlgebra
 
 data = load_behaviour_free_swimming_data(18)
 data.bouttime
-data.
