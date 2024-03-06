@@ -16,6 +16,7 @@ lazy = true
 
 [Wolf_ARTR_2023_T18]
 git-tree-sha1 = "cc5c933b511c17aea8d54dd90a9cf847e1e65078"
+lazy = true
 
     [[Wolf_ARTR_2023_T18.download]]
     sha256 = "452a16e6983cba90b03dfbee77f0d4d8a23f378bbc5ebaad48018bdcedfa5318"
@@ -23,6 +24,7 @@ git-tree-sha1 = "cc5c933b511c17aea8d54dd90a9cf847e1e65078"
 
 [Wolf_ARTR_2023_T22]
 git-tree-sha1 = "57d353f8dcca99308d90041c43e1ebbdbe9b4aa2"
+lazy = true
 
     [[Wolf_ARTR_2023_T22.download]]
     sha256 = "48dafab06a7409eb22c2d94a65dc72a49ac3f4b4ebea1ca872cc264bb71fa86d"
@@ -30,6 +32,7 @@ git-tree-sha1 = "57d353f8dcca99308d90041c43e1ebbdbe9b4aa2"
 
 [Wolf_ARTR_2023_T26]
 git-tree-sha1 = "df7e6bfd91c1f01958dd2caf98c9d068c5f00644"
+lazy = true
 
     [[Wolf_ARTR_2023_T26.download]]
     sha256 = "dc00804daa3ec873ced61da909e63cedd10ad57bacbbbfa982dd71f05a093552"
@@ -37,6 +40,7 @@ git-tree-sha1 = "df7e6bfd91c1f01958dd2caf98c9d068c5f00644"
 
 [Wolf_ARTR_2023_T30]
 git-tree-sha1 = "ec1ed65a3629384cebbf83311ac214afbd3d433d"
+lazy = true
 
     [[Wolf_ARTR_2023_T30.download]]
     sha256 = "aab41ae8149a8ad1c71d65662cfe5347605bb05e2e019e2b6503211c471eba9d"
@@ -44,6 +48,7 @@ git-tree-sha1 = "ec1ed65a3629384cebbf83311ac214afbd3d433d"
 
 [Wolf_ARTR_2023_T33]
 git-tree-sha1 = "b43e28ff20b4ed4aa2ea4c4a303c5494ad2dddc3"
+lazy = true
 
     [[Wolf_ARTR_2023_T33.download]]
     sha256 = "f2d96281da15b52e0f13423767f07d8a30f041857e3be7aa4a1898379c0aa026"
@@ -51,7 +56,16 @@ git-tree-sha1 = "b43e28ff20b4ed4aa2ea4c4a303c5494ad2dddc3"
 
 [Wolf_ARTR_2023_Distances]
 git-tree-sha1 = "f904e0318c4804aa75c2d0fe16f35ee3fb4fd8c8"
+lazy = true
 
     [[Wolf_ARTR_2023_Distances.download]]
     sha256 = "b770e18f2fcc278bb18171975f7072fc7de9c0c9f21fc14c3cd632735e06af93"
     url = "https://gist.github.com/cossio/b5b14d621757cd5bd3151e97ba2f60ed/raw/f904e0318c4804aa75c2d0fe16f35ee3fb4fd8c8.tar.gz"
+
+[HBO_Dunn_2016]
+git-tree-sha1 = "ad99656ad6f8c973f06532ad681c6e6e7c32915d"
+lazy = true
+
+    [[HBO_Dunn_2016.download]]
+    sha256 = "e79f341e9d1be0e1f7021f90d1cd135e06caab86ccba84c68ad3c4247b73f78d"
+    url = "https://gist.github.com/cossio/271360209642d1843f98b8d54d6d3762/raw/ad99656ad6f8c973f06532ad681c6e6e7c32915d.tar.gz"

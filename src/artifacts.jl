@@ -38,3 +38,8 @@ end
 function legoc2021_single_fish_T26_path()
     return joinpath(legoc2021_data_dir(), "sf_allsequences_T26.mat")
 end
+
+#= Data from Dunn et al 2016, which should contain long trajectories =#
+function dunn2016hbo_data_dir()
+    return artifact"HBO_Dunn_2016"
+end
