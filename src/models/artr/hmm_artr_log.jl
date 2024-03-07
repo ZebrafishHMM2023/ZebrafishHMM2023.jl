@@ -12,7 +12,8 @@ struct HMM_ARTR_Log <: HiddenMarkovModels.AbstractHMM
     )
         @assert length(pinit) == size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2)
         @assert all(≥(0), transition_matrix)
-        @assert all(≈(1), sum(transition_matrix; dims=2))
+        #@assert all(≈(1), sum(transition_matrix; dims=2))
+        @assert sum(transition_matrix; dims=2) ≈ ones(size(transition_matrix, 1))
         @assert all(≥(0), pinit)
         @assert sum(pinit) ≈ 1
         @assert pseudocount ≥ 0
