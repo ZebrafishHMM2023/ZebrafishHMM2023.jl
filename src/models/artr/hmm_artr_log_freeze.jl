@@ -23,7 +23,7 @@ struct HMM_ARTR_Log_Freeze <: HiddenMarkovModels.AbstractHMM
         @assert sum(transition_matrix; dims=2) ≈ ones(size(transition_matrix, 1))
         #@assert all(≈(1), sum(transition_matrix; dims=2))
         @assert all(≥(0), pinit)
-        @assert sum(pinit) ≈ 1
+        @assert isapprox(sum(pinit), 1; rtol=1e-8)
         @assert pseudocount ≥ 0
         return new(transition_matrix, h, pinit, pseudocount, transition_matrix_frozen, h_frozen, pinit_frozen)
     end
