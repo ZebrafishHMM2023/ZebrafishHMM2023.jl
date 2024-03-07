@@ -1,7 +1,7 @@
 name = "ZebrafishHMM2023"
 uuid = "982e605e-fd7d-4c5d-a517-224ed2053a87"
 authors = ["JFdCD <jfdecd@icloud.com>"]
-version = "11.1.1-DEV"
+version = "11.2.0"
 
 [deps]
 DampedUpdates = "c1d5de99-3441-47e2-85af-8ce5ee9923a2"

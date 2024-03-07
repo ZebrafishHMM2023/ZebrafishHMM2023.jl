@@ -50,5 +50,6 @@ include("models/artr/hmm_artr_log.jl")
 include("models/artr/hmm_artr_3_sym.jl")
 include("models/full_traj_models/hmm_g3_sym_full.jl")
 include("models/full_traj_models/hmm_g3_sym_full_exp.jl")
+include("models/artr/hmm_artr_log_freeze.jl")
 
 end
