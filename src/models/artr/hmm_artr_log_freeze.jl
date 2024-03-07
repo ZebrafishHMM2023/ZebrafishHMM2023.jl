@@ -29,11 +29,12 @@ struct HMM_ARTR_Log_Freeze <: HiddenMarkovModels.AbstractHMM
 end
 
 function HMM_ARTR_Log_Freeze(
-    ; transition_matrix::AbstractMatrix{<:Real}, h::AbstractMatrix{<:Real}, pseudocount::Real = 0.0,
+    ;
+    transition_matrix::AbstractMatrix{<:Real}, pinit::AbstractVector{<:Real},
+    h::AbstractMatrix{<:Real}, pseudocount::Real = 0.0,
     transition_matrix_frozen::Bool = false, h_frozen::Bool = false, pinit_frozen::Bool = false
 )
-    @assert size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2)
-    pinit = ones(size(transition_matrix, 1)) / size(transition_matrix, 1)
+    @assert size(transition_matrix, 1) == size(transition_matrix, 2) == size(h, 2) == length(pinit)
     return HMM_ARTR_Log_Freeze(transition_matrix, h, pinit, pseudocount, transition_matrix_frozen, h_frozen, pinit_frozen)
 end
 
