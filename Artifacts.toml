@@ -72,6 +72,7 @@ lazy = true
 
 [Wolf_Eyes_Data_20240311]
 git-tree-sha1 = "5c50bcb74d5b1f321705b009ced6912835ab3acc"
+lazy = true
 
     [[Wolf_Eyes_Data_20240311.download]]
     sha256 = "fa1b3e979769b3dffa1759ecc922aea792c90b5a4dc83382b2fe1fa84abb669d"
