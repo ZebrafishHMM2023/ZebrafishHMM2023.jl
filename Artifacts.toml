@@ -69,3 +69,10 @@ lazy = true
     [[HBO_Dunn_2016.download]]
     sha256 = "e79f341e9d1be0e1f7021f90d1cd135e06caab86ccba84c68ad3c4247b73f78d"
     url = "https://gist.github.com/cossio/271360209642d1843f98b8d54d6d3762/raw/ad99656ad6f8c973f06532ad681c6e6e7c32915d.tar.gz"
+
+[Wolf_Eyes_Data_20240311]
+git-tree-sha1 = "5c50bcb74d5b1f321705b009ced6912835ab3acc"
+
+    [[Wolf_Eyes_Data_20240311.download]]
+    sha256 = "fa1b3e979769b3dffa1759ecc922aea792c90b5a4dc83382b2fe1fa84abb669d"
+    url = "https://gist.github.com/cossio/bde96a24ca191d99124fffe39dcae893/raw/5c50bcb74d5b1f321705b009ced6912835ab3acc.tar.gz"
