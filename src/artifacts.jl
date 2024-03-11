@@ -43,3 +43,7 @@ end
 function dunn2016hbo_data_dir()
     return artifact"HBO_Dunn_2016"
 end
+
+function wolf_eyes_data_dir()
+    return artifact"Wolf_Eyes_Data_20240311"
+end
