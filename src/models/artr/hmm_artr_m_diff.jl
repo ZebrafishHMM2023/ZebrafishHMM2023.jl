@@ -4,35 +4,37 @@ struct HMM_ARTR_m_diff <: HiddenMarkovModels.AbstractHMM
     μ::Vector{Float64}
     σ::Vector{Float64}
     pinit::Vector{Float64} # initial state probabilities
-    pseudocount::Float64 # pseudocount for the inference of 'h'
+    λreg::Vector{Float64} # regularization for μ
 
     function HMM_ARTR_m_diff(
         transition_matrix::AbstractMatrix{<:Real},
         μ::AbstractVector{<:Real},
         σ::AbstractVector{<:Real},
         pinit::AbstractVector{<:Real},
-        pseudocount::Float64
+        λreg::AbstractVector{<:Real}
     )
-        @assert length(pinit) == size(transition_matrix, 1) == size(transition_matrix, 2) == length(μ) == length(σ) # number of states
+        @assert length(pinit) == size(transition_matrix, 1) == size(transition_matrix, 2) == length(μ) == length(σ) == length(λreg) # number of states
         @assert all(≥(0), transition_matrix)
         @assert sum(transition_matrix; dims=2) ≈ ones(size(transition_matrix, 1))
         @assert all(≥(0), pinit)
         @assert all(>(0), σ)
+        @assert all(≥(0), λreg)
         @assert all(isfinite, μ)
+        @assert all(isfinite, σ)
+        @assert all(isfinite, λreg)
         @assert isapprox(sum(pinit), 1; rtol=1e-8)
-        @assert pseudocount ≥ 0
-        return new(transition_matrix, μ, σ, pinit, pseudocount)
+        return new(transition_matrix, μ, σ, pinit, λreg)
     end
 end
 
 function HMM_ARTR_m_diff(
     transition_matrix::AbstractMatrix{<:Real},
-    μ::AbstractVector{<:Real}, σ::AbstractVector{<:Real},
-    pseudocount::Real = 0.0
+    μ::AbstractVector{<:Real}, σ::AbstractVector{<:Real}
 )
     @assert size(transition_matrix, 1) == size(transition_matrix, 2) == length(μ) == length(σ)
     pinit = ones(size(transition_matrix, 1)) / size(transition_matrix, 1)
-    return HMM_ARTR_m_diff(transition_matrix, μ, σ, pinit, pseudocount)
+    λreg = zeros(length(μ))
+    return HMM_ARTR_m_diff(transition_matrix, μ, σ, pinit, λreg)
 end
 
 # number of hidden states
@@ -76,7 +78,7 @@ function save_hmm(path::AbstractString, hmm::HMM_ARTR_m_diff)
         write(h5, "μ", hmm.μ)
         write(h5, "σ", hmm.σ)
         write(h5, "pinit", hmm.pinit)
-        write(h5, "pseudocount", [hmm.pseudocount])
+        write(h5, "λreg", hmm.λreg)
     end
 end
 
@@ -87,7 +89,7 @@ function load_hmm(path::AbstractString, ::Type{HMM_ARTR_m_diff})
         μ = read(h5, "μ")
         σ = read(h5, "σ")
         pinit = read(h5, "pinit")
-        pseudocount = only(read(h5, "pseudocount"))
-        return HMM_ARTR_m_diff(transition_matrix, μ, σ, pinit, pseudocount)
+        λreg = read(h5, "λreg")
+        return HMM_ARTR_m_diff(transition_matrix, μ, σ, pinit, λreg)
     end
 end
