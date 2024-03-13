@@ -93,3 +93,17 @@ function load_hmm(path::AbstractString, ::Type{HMM_ARTR_m_diff})
         return HMM_ARTR_m_diff(transition_matrix, μ, σ, pinit, λreg)
     end
 end
+
+function reorder_states!(hmm::HMM_ARTR_m_diff)
+    @assert length(hmm) == 3
+
+    Rstate, Fstate, Lstate  = sortperm(hmm.μ)
+
+    hmm.transition_matrix .= hmm.transition_matrix[[Fstate, Lstate, Rstate], [Fstate, Lstate, Rstate]]
+    hmm.μ .= hmm.μ[[Fstate, Lstate, Rstate]]
+    hmm.σ .= hmm.σ[[Fstate, Lstate, Rstate]]
+    hmm.pinit .= hmm.pinit[[Fstate, Lstate, Rstate]]
+    hmm.λreg .= hmm.λreg[[Fstate, Lstate, Rstate]]
+
+    return hmm
+end

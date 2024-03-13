@@ -1,6 +1,7 @@
 import CairoMakie
 import Makie
 using DelimitedFiles: writedlm
+using Distributions: Normal
 using HiddenMarkovModels: baum_welch
 using HiddenMarkovModels: initial_distribution
 using HiddenMarkovModels: logdensityof
@@ -15,12 +16,33 @@ using ZebrafishHMM2023: HMM_ARTR_m_diff
 using ZebrafishHMM2023: load_artr_wolf_2023
 using ZebrafishHMM2023: normalize_transition_matrix
 using ZebrafishHMM2023: viterbi_artr
+using ZebrafishHMM2023: reorder_states!
 
 data = load_artr_wolf_2023(; temperature=18, fish=12)
 traj = vec(mean(data.left; dims=1) - mean(data.right; dims=1))
 
 hmm = HMM_ARTR_m_diff(normalize_transition_matrix(rand(3,3)), randn(3), ones(3))
-(hmm, lL) = baum_welch(hmm, trajs; max_iterations = 500, check_loglikelihood_increasing = false, atol = ATol(1e-7))
+(hmm, lL) = baum_welch(hmm, traj; max_iterations = 500, check_loglikelihood_increasing = false, atol = ATol(1e-7))
+reorder_states!(hmm)
+
+let fig = Makie.Figure()
+    ax = Makie.Axis(fig[1,1], width=300, height=150, xlabel="mL - mR")
+    Makie.hist!(ax, traj[viterbi(hmm, traj) .== 1], color=(:black, 0.7), normalization=:pdf)
+    Makie.hist!(ax, traj[viterbi(hmm, traj) .== 2], color=(:blue, 0.7), normalization=:pdf)
+    Makie.hist!(ax, traj[viterbi(hmm, traj) .== 3], color=(:red, 0.7), normalization=:pdf)
+
+    xs = -1:0.01:1
+    Makie.lines!(ax, xs, [exp(logdensityof(Normal(hmm.μ[1], hmm.σ[1]), x)) for x = xs], color=:black)
+    Makie.lines!(ax, xs, [exp(logdensityof(Normal(hmm.μ[2], hmm.σ[2]), x)) for x = xs], color=:blue)
+    Makie.lines!(ax, xs, [exp(logdensityof(Normal(hmm.μ[3], hmm.σ[3]), x)) for x = xs], color=:red)
+
+    Makie.resize_to_layout!(fig)
+
+    fig
+end
+
+
+
 
 let fig = Makie.Figure()
     ax = Makie.Axis(fig[1,1], width=400, height=200)
