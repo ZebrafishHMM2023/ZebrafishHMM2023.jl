@@ -19,7 +19,7 @@ jobs:
           - x64
     
     env:
-      GH_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ secrets.KAKI_PAT }}
       JULIA_PKG_USE_CLI_GIT: true
     
     steps:
