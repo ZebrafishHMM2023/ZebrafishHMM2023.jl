@@ -17,6 +17,11 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
+    
+    env:
+      GH_TOKEN: ${{ github.token }}
+      JULIA_PKG_USE_CLI_GIT: true
+    
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - uses: julia-actions/setup-julia@ac0d62164df5a47de404f4e96ce86a1a28a28d56
@@ -25,24 +30,11 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@dc1a3cdeacb521b0ca93cfc66143fcadb15a5bd0
 
-      # Add my registry. Windows complains about '//' unless I specify 'shell: bash' here.
       - run: julia --color=yes --project=.ci/ -e 'import Pkg; Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/cossio/CossioJuliaRegistry.git"))'
         shell: bash
 
-      # Setup machine user SSH key
-      - name: Setup SSH Keys and known_hosts
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.KAKIBOT_KEY }}"
+      - name: Authentication with Github
+        run: gh auth setup-git
 
-      # Install dependencies. Instruct Pkg to use command-line `git`, which is more likely to work
-      # with the SSH key setup above.
       - uses: julia-actions/julia-buildpkg@90dd6f23eb49626e4e6612cb9d64d456f86e6a1c
-        env:
-          JULIA_PKG_USE_CLI_GIT: true
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-
-      # Run tests
       - uses: julia-actions/julia-runtest@79a7e100883947123f8263c5f06e6c0ea3eb972f
