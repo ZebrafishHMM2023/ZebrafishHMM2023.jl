@@ -80,6 +80,7 @@ lazy = true
 
 [Wolf_Eyes_ARTR_Data_20240313]
 git-tree-sha1 = "9d0690eac45ec05884261aaf81e7ea891a0ce5a4"
+lazy = true
 
     [[Wolf_Eyes_ARTR_Data_20240313.download]]
     sha256 = "87e4d531c37835e5f321ad312b1625dfdc9169809d58bf0b4ff2bf6bb7363cb1"
