@@ -1,0 +1,21 @@
+{
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"configureZshAsDefaultShell": true,
+			"nonFreePackages": true
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"github.vscode-github-actions",
+				"ms-toolsai.jupyter",
+				"tamasfe.even-better-toml",
+				"julialang.language-julia"
+			]
+		}
+	},
+	"onCreateCommand": "bash .devcontainer/onCreate.sh"
+}
