@@ -6,3 +6,4 @@ JuliaSysimage.so
 docs/build/
 docs/site/
 docs/src/literate/*.md
+.DS_Store
