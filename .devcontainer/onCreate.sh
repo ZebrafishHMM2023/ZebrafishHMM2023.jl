@@ -1,5 +1,6 @@
-# install Julia
+# install Julia and make sure it's in the PATH of the current shell
 curl -fsSL https://install.julialang.org | sh -s -- --yes 
+. /home/vscode/.zshrc
 
 # Julia startup file
 mkdir -p ~/.julia/config
