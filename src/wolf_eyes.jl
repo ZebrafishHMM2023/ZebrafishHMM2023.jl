@@ -3,6 +3,6 @@ function wolf_eyes_data()
     return mat["D"]
 end
 
-function
-    artifact"Wolf_Eyes_ARTR_Data_20240313"
+function wolf_eyes_artr_data_dir()
+    return artifact"Wolf_Eyes_ARTR_Data_20240313"
 end
