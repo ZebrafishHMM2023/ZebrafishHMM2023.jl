@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
@@ -17,11 +16,9 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
-    
     env:
       GH_TOKEN: ${{ secrets.KAKI_PAT }}
       JULIA_PKG_USE_CLI_GIT: true
-    
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - uses: julia-actions/setup-julia@ac0d62164df5a47de404f4e96ce86a1a28a28d56
@@ -29,12 +26,7 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@dc1a3cdeacb521b0ca93cfc66143fcadb15a5bd0
-
       - run: julia --color=yes --project=.ci/ -e 'import Pkg; Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/cossio/CossioJuliaRegistry.git"))'
-        shell: bash
-
-      - name: Authentication with Github
-        run: gh auth setup-git
-
+      - run: gh auth setup-git
       - uses: julia-actions/julia-buildpkg@90dd6f23eb49626e4e6612cb9d64d456f86e6a1c
       - uses: julia-actions/julia-runtest@79a7e100883947123f8263c5f06e6c0ea3eb972f
