@@ -6,5 +6,6 @@ Pkg.Registry.add("General")
 Pkg.add([
     "CairoMakie",
     "Makie",
+    "MyRegistrator",
     "Revise",
 ])
