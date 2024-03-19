@@ -58,7 +58,7 @@ function StatsAPI.fit!(
     hmm.transition_matrix .= trans_count ./ sum(trans_count; dims=2)
 
     for i = 1:length(hmm)
-        d = fit_mle(Normal, obs_seq, state_marginals[i,:])
+        d = fit_mle(Normal, obs_seq, float(state_marginals[i,:]))
         hmm.μ[i] = d.μ
         hmm.σ[i] = d.σ
     end
