@@ -1,13 +1,9 @@
 # install Julia and make sure it's in the PATH of the current shell
 curl -fsSL https://install.julialang.org | sh -s -- --yes 
-. /home/vscode/.zshrc
 
 # Julia startup file
 mkdir -p ~/.julia/config
 cp .devcontainer/julia_startup.jl ~/.julia/config/startup.jl
-
-# Install Julia packages, registries, ...
-/home/vscode/.juliaup/bin/julia .devcontainer/onCreate.jl
 
 # Github CLI autocomplete (https://www.ajfriesen.com/github-cli-auto-completion-with-oh-my-zsh/)
 mkdir -p ~/.oh-my-zsh/completions
@@ -17,3 +13,6 @@ echo "compinit -i" >> ~/.zshrc
 
 # Directory to store Rfam data (set in LocalPreferences.toml)
 mkdir -p ~/data/Rfam
+
+# Install Julia packages, registries, ...
+/home/vscode/.juliaup/bin/julia .devcontainer/onCreate.jl

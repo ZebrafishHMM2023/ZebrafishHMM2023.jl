@@ -14,7 +14,10 @@
 				"ms-toolsai.jupyter",
 				"tamasfe.even-better-toml",
 				"julialang.language-julia"
-			]
+			],
+			"settings": {
+				"julia.executablePath": "~/.juliaup/bin/julia"
+			}
 		}
 	},
 	"onCreateCommand": "bash .devcontainer/onCreate.sh"
