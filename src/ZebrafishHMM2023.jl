@@ -2,26 +2,37 @@ module ZebrafishHMM2023
 
 import DensityInterface
 import HiddenMarkovModels
-import Optim
-import Optimization
-import OptimizationOptimJL
+import LazyArtifacts
 import StatsAPI
-import NonlinearSolve
-
 using DampedUpdates: damp
 using DensityInterface: logdensityof
-using Distributions: Normal, Gamma, AffineDistribution, truncated, fit_mle, params, Exponential
-using HDF5: h5open, attrs
-using LazyArtifacts: LazyArtifacts, @artifact_str
-using LinearAlgebra: eigvecs, dot, normalize
-using LogExpFunctions: logistic, log1pexp
+using Distributions: AffineDistribution
+using Distributions: Exponential
+using Distributions: fit_mle
+using Distributions: Gamma
+using Distributions: Normal
+using Distributions: params
+using Distributions: truncated
+using HDF5: attrs
+using HDF5: h5open
+using LazyArtifacts: @artifact_str
+using LinearAlgebra: dot
+using LinearAlgebra: eigvecs
+using LinearAlgebra: normalize
+using LogarithmicNumbers: LogFloat64
+using LogExpFunctions: log1pexp
+using LogExpFunctions: logistic
 using MAT: matread
 using Random: AbstractRNG
-using SpecialFunctions: logerfcx, erfcx
-using StaticArrays: SMatrix, @SMatrix, @SVector
-using Statistics: mean, std, middle
+using SpecialFunctions: erfcx
+using SpecialFunctions: logerfcx
+using StaticArrays: @SMatrix
+using StaticArrays: @SVector
+using StaticArrays: SMatrix
+using Statistics: mean
+using Statistics: middle
+using Statistics: std
 using StatsAPI: fit
-using LogarithmicNumbers: LogFloat64
 
 include("artifacts.jl")
 include("missing.jl")
