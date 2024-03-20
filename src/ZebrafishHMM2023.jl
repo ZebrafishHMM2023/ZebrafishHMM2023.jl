@@ -3,6 +3,7 @@ module ZebrafishHMM2023
 import DensityInterface
 import HiddenMarkovModels
 import LazyArtifacts
+import Random
 import StatsAPI
 using DampedUpdates: damp
 using DensityInterface: logdensityof
@@ -10,6 +11,7 @@ using Distributions: AffineDistribution
 using Distributions: Exponential
 using Distributions: fit_mle
 using Distributions: Gamma
+using Distributions: logpdf
 using Distributions: Normal
 using Distributions: params
 using Distributions: truncated
@@ -65,5 +67,7 @@ include("models/full_traj_models/hmm_g3_sym_full_exp.jl")
 include("models/artr/hmm_artr_log_freeze.jl")
 include("models/artr/hmm_artr_m_diff.jl")
 include("models/eyes/hmm_gaze.jl")
+include("models/eyes/hmm_gaze_artr.jl")
+include("models/eyes/hmm_eyes_artr_only.jl")
 
 end
