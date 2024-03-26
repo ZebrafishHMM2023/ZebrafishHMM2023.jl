@@ -99,24 +99,3 @@ function gaze_artr_data()
 
     return collect(zip(gaze_data_subsampled, eachcol(vcat(artr_data.left, artr_data.right))))
 end
-
-function save_hmm(path::AbstractString, hmm::HMM_Gaze)
-    h5open(path, "w") do h5
-        write(h5, "type", "HMM_Gaze")
-        write(h5, "transition_matrix", float(hmm.transition_matrix))
-        write(h5, "μ", hmm.μ)
-        write(h5, "σ", hmm.σ)
-        write(h5, "pinit", float(hmm.pinit))
-    end
-end
-
-function load_hmm(path::AbstractString, ::Type{HMM_Gaze})
-    h5open(path, "r") do h5
-        read(h5, "type") == "HMM_Gaze" || throw(ArgumentError("HMM type missmatch"))
-        transition_matrix = read(h5, "transition_matrix")
-        μ = read(h5, "μ")
-        σ = read(h5, "σ")
-        pinit = read(h5, "pinit")
-        return HMM_Gaze(transition_matrix, μ, σ, pinit)
-    end
-end
