@@ -34,7 +34,9 @@ function wolf_eyes_20240415_data()
     timeminusleft = D_struct["timeminusleft"]
     timeminusright = D_struct["timeminusright"]
 
-    return (; left, right, corr_left, corr_right, position, timeplusleft, timeplusright, timeminusleft, timeminusright)
+    gaze = (position[:,3] - position[:,6]) / 2
+
+    return (; left, right, corr_left, corr_right, position, timeplusleft, timeplusright, timeminusleft, timeminusright, gaze)
 end
 
 #= Third eye movement data, 20240422, from S.Wolf =#
@@ -55,5 +57,7 @@ function wolf_eyes_20240422_data()
     timeminusleft = D_struct["timeminusleft"]
     timeminusright = D_struct["timeminusright"]
 
-    return (; left, right, corr_left, corr_right, position, timeplusleft, timeplusright, timeminusleft, timeminusright)
+    gaze = (position[:,3] - position[:,6]) / 2
+
+    return (; left, right, corr_left, corr_right, position, timeplusleft, timeplusright, timeminusleft, timeminusright, gaze)
 end
