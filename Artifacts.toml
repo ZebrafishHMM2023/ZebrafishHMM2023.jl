@@ -85,3 +85,11 @@ lazy = true
     [[Wolf_Eyes_ARTR_Data_20240313.download]]
     sha256 = "87e4d531c37835e5f321ad312b1625dfdc9169809d58bf0b4ff2bf6bb7363cb1"
     url = "https://gist.github.com/cossio/f22c9ecfb740f13a730da8b8079ea3c0/raw/9d0690eac45ec05884261aaf81e7ea891a0ce5a4.tar.gz"
+
+[Wolf_Eyes_ARTR_Data_20240415]
+git-tree-sha1 = "3030ed1f5d5afeade374d3b718d0d83bad9263fe"
+lazy = true
+
+    [[Wolf_Eyes_ARTR_Data_20240415.download]]
+    sha256 = "8a01dd8a31e23f855bd6d0da93885ba0ef65614bdad0ae8fa356bead442b8f36"
+    url = "https://gist.github.com/cossio/7572835b83e3eaad121d35727158e544/raw/3030ed1f5d5afeade374d3b718d0d83bad9263fe.tar.gz"
