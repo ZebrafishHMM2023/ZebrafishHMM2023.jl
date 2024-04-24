@@ -35,7 +35,7 @@ md"# Functions"
 md"# Analysis"
 
 # ╔═╡ f233f5c5-cfca-4dd9-bff5-e70ed2f2bd3f
-raw_data = ZebrafishHMM2023.wolf_eyes_20240422_data()
+raw_data = ZebrafishHMM2023.wolf_eyes_20240415_data()
 
 # ╔═╡ 49adf835-2d1e-400e-bc31-db21c43c2489
 gaze_data_subsampled = map(mean, ZebrafishHMM2023.chunks(raw_data.gaze, size(raw_data.left, 2)))
@@ -47,7 +47,7 @@ aggregated_data = collect(zip(gaze_data_subsampled, eachcol(vcat(raw_data.left, 
 num_neurons_artr = size(raw_data.left, 1) + size(raw_data.right, 1)
 
 # ╔═╡ fe3eaeb8-a03f-4173-aa85-c143065ddbce
-hmm_num_states = 3
+hmm_num_states = 4
 
 # ╔═╡ e18d08cd-f786-46a8-877b-28c89a122b5c
 hmm_init = ZebrafishHMM2023.HMM_Gaze_ARTR(
@@ -65,13 +65,13 @@ viterbi_states = HiddenMarkovModels.viterbi(hmm_trained, aggregated_data)
 
 # ╔═╡ d1c34427-3ffd-4275-9444-cd30ca7a8675
 let fig = Makie.Figure()
-    _colors = [:teal, :orange, :purple, :pink]
+    _colors = [:teal, :orange, :purple, :blue]
     ax = Makie.Axis(fig[1,1], width=500, height=500, xlabel="mL", ylabel="mR")
     for s = 1:length(hmm_trained)
         Makie.scatter!(ax,
             vec(mean(raw_data.left[:, viterbi_states .== s]; dims=1)),
             vec(mean(raw_data.right[:, viterbi_states .== s]; dims=1));
-            markersize=7, color=(_colors[s], 0.25), label="$s"
+            markersize=5, color=(_colors[s], 0.5), label="$s"
         )
     end
     Makie.xlims!(ax, -0.01, 0.5)
@@ -83,7 +83,7 @@ end
 
 # ╔═╡ c61c3528-9db4-48cb-aed2-cb69c994bcb5
 let fig = Makie.Figure()
-    _colors = [:teal, :orange, :purple, :pink]
+    _colors = [:teal, :orange, :purple, :blue]
     ax = Makie.Axis(fig[1,1], width=1500, height=300, xlabel="time", ylabel="gaze")
 	Makie.lines!(ax, gaze_data_subsampled, color=:gray)
     for s = 1:length(hmm_trained)
@@ -96,7 +96,7 @@ end
 
 # ╔═╡ 220e73ea-e2ea-4238-bb13-2885d1780ed3
 let fig = Makie.Figure()
-    _colors = [:teal, :orange, :purple, :pink]
+    _colors = [:teal, :orange, :purple, :blue]
     ax = Makie.Axis(fig[1,1], width=500, height=500, xlabel="gaze", ylabel="frequency")
     for s = 1:length(hmm_trained)
 		Makie.stephist!(ax, gaze_data_subsampled[viterbi_states .== s], color=_colors[s], label="$s", normalization=:pdf)

@@ -35,7 +35,7 @@ md"# Functions"
 md"# Analysis"
 
 # ╔═╡ c651d7dd-40d8-43be-b470-7266fac5e8c7
-raw_data = ZebrafishHMM2023.wolf_eyes_20240422_data()
+raw_data = ZebrafishHMM2023.wolf_eyes_20240415_data()
 
 # ╔═╡ 93272940-4259-44fa-9879-69a7e96db6ac
 num_neurons_artr = size(raw_data.left, 1) + size(raw_data.right, 1)
