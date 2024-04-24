@@ -31,6 +31,21 @@ import HiddenMarkovModels
 # ╔═╡ 12045797-b2a1-48ce-a3cf-bee1f58c169e
 md"# Functions"
 
+# ╔═╡ f8ffba7e-b7e1-4fa6-8fd6-f70b84d629c6
+function equal_partition(n::Int64, parts::Int64)
+    if n < parts
+        return [ x:x for x in 1:n ]
+    end
+    starts = push!(Int64.(round.(1:n/parts:n)), n+1)
+    return [ starts[i]:starts[i+1]-1 for i in 1:length(starts)-1 ]
+end
+
+# ╔═╡ 0ebb91fa-32e8-41f0-9259-f5d0641d6be9
+function equal_partition(V::AbstractVector, parts::Int64)
+    ranges = equal_partition(length(V), parts)
+    return [ view(V,range) for range in ranges ]
+end
+
 # ╔═╡ 7b961547-7942-46ff-81ff-44d8b537911d
 md"# Analysis"
 
@@ -38,13 +53,7 @@ md"# Analysis"
 raw_data = ZebrafishHMM2023.wolf_eyes_20240415_data()
 
 # ╔═╡ 49adf835-2d1e-400e-bc31-db21c43c2489
-gaze_data_subsampled = map(mean, ZebrafishHMM2023.chunks(raw_data.gaze, size(raw_data.left, 2)))
-
-# ╔═╡ 2736398b-04a3-4234-85fd-73ab40c749a5
-length(gaze_data_subsampled)
-
-# ╔═╡ 11db4004-912f-4fb7-96f4-c1e290dc4827
-length(raw_data.gaze), size(raw_data.left, 2)
+gaze_data_subsampled = map(mean, equal_partition(raw_data.gaze, size(raw_data.left, 2)))
 
 # ╔═╡ 00c78793-79aa-4d70-9c4f-1e245e4e0fb9
 aggregated_data = collect(zip(gaze_data_subsampled, eachcol(vcat(raw_data.left, raw_data.right))))
@@ -53,7 +62,7 @@ aggregated_data = collect(zip(gaze_data_subsampled, eachcol(vcat(raw_data.left, 
 num_neurons_artr = size(raw_data.left, 1) + size(raw_data.right, 1)
 
 # ╔═╡ fe3eaeb8-a03f-4173-aa85-c143065ddbce
-hmm_num_states = 2
+hmm_num_states = 3
 
 # ╔═╡ e18d08cd-f786-46a8-877b-28c89a122b5c
 hmm_init = ZebrafishHMM2023.HMM_Gaze_ARTR(
@@ -152,11 +161,11 @@ float(hmm_trained.transition_matrix)
 # ╠═ec9792cc-1651-46f2-9eb4-216321dde7a7
 # ╠═4f5f45fe-d114-44ca-acad-455afba4c3e3
 # ╠═12045797-b2a1-48ce-a3cf-bee1f58c169e
+# ╠═f8ffba7e-b7e1-4fa6-8fd6-f70b84d629c6
+# ╠═0ebb91fa-32e8-41f0-9259-f5d0641d6be9
 # ╠═7b961547-7942-46ff-81ff-44d8b537911d
 # ╠═f233f5c5-cfca-4dd9-bff5-e70ed2f2bd3f
 # ╠═49adf835-2d1e-400e-bc31-db21c43c2489
-# ╠═2736398b-04a3-4234-85fd-73ab40c749a5
-# ╠═11db4004-912f-4fb7-96f4-c1e290dc4827
 # ╠═00c78793-79aa-4d70-9c4f-1e245e4e0fb9
 # ╠═110e289a-be91-440f-a28b-d1f761859286
 # ╠═fe3eaeb8-a03f-4173-aa85-c143065ddbce

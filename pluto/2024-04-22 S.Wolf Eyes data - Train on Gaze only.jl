@@ -41,7 +41,7 @@ raw_data = ZebrafishHMM2023.wolf_eyes_20240422_data()
 num_neurons_artr = size(raw_data.left, 1) + size(raw_data.right, 1)
 
 # ╔═╡ 031f37e6-7db0-4043-a335-b0a5325b90c4
-hmm_num_states = 2
+hmm_num_states = 3
 
 # ╔═╡ 4081c0dd-85a0-4be2-af35-7bc2a00fa609
 hmm_init = ZebrafishHMM2023.HMM_Gaze(
@@ -86,6 +86,14 @@ float(sum(hmm_trained.transition_matrix; dims=2))
 # ╔═╡ f8a21e49-4cad-4066-a8ec-b9dd50cf98fd
 float(hmm_trained.transition_matrix)
 
+# ╔═╡ 2c952cc9-1775-499e-aebc-f3eac40a52df
+let fig = Makie.Figure()
+    ax = Makie.Axis(fig[1,1], width=500, height=500, xlabel="gaze", ylabel="frequency")
+	Makie.stephist!(ax, raw_data.gaze, color=:black, normalization=:pdf, bins=100)
+    Makie.resize_to_layout!(fig)
+    fig
+end
+
 # ╔═╡ Cell order:
 # ╠═beb44192-483c-405c-832c-d6d6a5b99312
 # ╠═d9d420e7-9df0-4aa5-8b18-b9ec77a9021e
@@ -107,3 +115,4 @@ float(hmm_trained.transition_matrix)
 # ╠═72a1b761-3acc-48d5-b943-f2d217ad1ef9
 # ╠═e302a623-9e3e-4df2-967f-64425b444502
 # ╠═f8a21e49-4cad-4066-a8ec-b9dd50cf98fd
+# ╠═2c952cc9-1775-499e-aebc-f3eac40a52df
