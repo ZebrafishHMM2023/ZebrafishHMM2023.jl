@@ -1,10 +1,23 @@
 using Test: @test, @testset, @inferred
-using ZebrafishHMM2023: chunks, split_into_repeated_subsequences, find_repeats
+using ZebrafishHMM2023: chunks, makechunks, equal_partition, split_into_repeated_subsequences, find_repeats
 
 @testset "chunks" begin
     @test chunks(1:54, 5) == [1:11, 12:22, 23:33, 34:44, 45:54]
     @test chunks(2:55, 5) == [2:12, 13:23, 24:34, 35:45, 46:55]
     @test length(chunks(1:32714, 1635)) == 1635
+end
+
+# @testset "makechunks" begin
+#     @test makechunks(1:54, 5) == [1:11, 12:22, 23:33, 34:44, 45:54]
+#     @test makechunks(2:55, 5) == [2:12, 13:23, 24:34, 35:45, 46:55]
+#     @test length(makechunks(1:32714, 1635)) == 1635
+# end
+
+@testset "equal_partition" begin
+    @test equal_partition(1:54, 5) == [1:11, 12:22, 23:32, 33:43, 44:54]
+    @test equal_partition(2:55, 5) == [2:12, 13:23, 24:33, 34:44, 45:55]
+    @test length(equal_partition(1:32714, 1635)) == 1635
+    @test reduce(vcat, equal_partition(1:32714, 1635)) == 1:32714
 end
 
 @testset "split_into_repeated_subsequences" begin
