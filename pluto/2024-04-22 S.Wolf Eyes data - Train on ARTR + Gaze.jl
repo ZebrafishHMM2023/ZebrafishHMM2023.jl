@@ -40,6 +40,12 @@ raw_data = ZebrafishHMM2023.wolf_eyes_20240415_data()
 # ╔═╡ 49adf835-2d1e-400e-bc31-db21c43c2489
 gaze_data_subsampled = map(mean, ZebrafishHMM2023.chunks(raw_data.gaze, size(raw_data.left, 2)))
 
+# ╔═╡ 2736398b-04a3-4234-85fd-73ab40c749a5
+length(gaze_data_subsampled)
+
+# ╔═╡ 11db4004-912f-4fb7-96f4-c1e290dc4827
+length(raw_data.gaze), size(raw_data.left, 2)
+
 # ╔═╡ 00c78793-79aa-4d70-9c4f-1e245e4e0fb9
 aggregated_data = collect(zip(gaze_data_subsampled, eachcol(vcat(raw_data.left, raw_data.right))))
 
@@ -47,7 +53,7 @@ aggregated_data = collect(zip(gaze_data_subsampled, eachcol(vcat(raw_data.left, 
 num_neurons_artr = size(raw_data.left, 1) + size(raw_data.right, 1)
 
 # ╔═╡ fe3eaeb8-a03f-4173-aa85-c143065ddbce
-hmm_num_states = 4
+hmm_num_states = 2
 
 # ╔═╡ e18d08cd-f786-46a8-877b-28c89a122b5c
 hmm_init = ZebrafishHMM2023.HMM_Gaze_ARTR(
@@ -63,10 +69,13 @@ hmm_trained, train_lls = HiddenMarkovModels.baum_welch(
 # ╔═╡ 80a3fa8e-7766-4ca8-b00d-ec0fb5e9b344
 viterbi_states = HiddenMarkovModels.viterbi(hmm_trained, aggregated_data)
 
+# ╔═╡ eee4f436-8f50-4342-aa48-b0c877acf675
+raw_data.left[:, viterbi_states .== 1]
+
 # ╔═╡ d1c34427-3ffd-4275-9444-cd30ca7a8675
 let fig = Makie.Figure()
     _colors = [:teal, :orange, :purple, :blue]
-    ax = Makie.Axis(fig[1,1], width=500, height=500, xlabel="mL", ylabel="mR")
+    ax = Makie.Axis(fig[1,1], width=400, height=400, xlabel="mL", ylabel="mR")
     for s = 1:length(hmm_trained)
         Makie.scatter!(ax,
             vec(mean(raw_data.left[:, viterbi_states .== s]; dims=1)),
@@ -117,7 +126,7 @@ end
 
 # ╔═╡ 0363799b-49d7-436f-9b8c-a30a516765b6
 let fig = Makie.Figure()
-    ax = Makie.Axis(fig[1,1], width=500, height=500, xticks=(1:3, ["L", "F", "R"]), yticks=(1:3, ["L", "F", "R"]))
+    ax = Makie.Axis(fig[1,1], width=500, height=500, xticks=1:hmm_num_states, yticks=1:hmm_num_states, xlabel="initial state", ylabel="final state")
 	plt = Makie.heatmap!(ax, float(hmm_trained.transition_matrix))
 	Makie.Colorbar(fig[1,2], plt)
     Makie.resize_to_layout!(fig)
@@ -146,12 +155,15 @@ float(hmm_trained.transition_matrix)
 # ╠═7b961547-7942-46ff-81ff-44d8b537911d
 # ╠═f233f5c5-cfca-4dd9-bff5-e70ed2f2bd3f
 # ╠═49adf835-2d1e-400e-bc31-db21c43c2489
+# ╠═2736398b-04a3-4234-85fd-73ab40c749a5
+# ╠═11db4004-912f-4fb7-96f4-c1e290dc4827
 # ╠═00c78793-79aa-4d70-9c4f-1e245e4e0fb9
 # ╠═110e289a-be91-440f-a28b-d1f761859286
 # ╠═fe3eaeb8-a03f-4173-aa85-c143065ddbce
 # ╠═e18d08cd-f786-46a8-877b-28c89a122b5c
 # ╠═cb5b06de-82a1-41e9-b6ae-247a56f275a8
 # ╠═80a3fa8e-7766-4ca8-b00d-ec0fb5e9b344
+# ╠═eee4f436-8f50-4342-aa48-b0c877acf675
 # ╠═d1c34427-3ffd-4275-9444-cd30ca7a8675
 # ╠═c61c3528-9db4-48cb-aed2-cb69c994bcb5
 # ╠═220e73ea-e2ea-4238-bb13-2885d1780ed3

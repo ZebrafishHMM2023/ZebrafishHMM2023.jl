@@ -14,6 +14,12 @@ function chunks(list, n::Int)
     return [list[i:min(end, i + len - 1)] for i = firstindex(list):len:lastindex(list)]
 end
 
+# correct version, from https://discourse.julialang.org/t/split-vector-into-n-potentially-unequal-length-subvectors/73548/4?u=e3c6
+function makechunks(X::AbstractVector, n::Integer)
+    c = length(X) ÷ n
+    return [X[1+c*k:(k == n-1 ? end : c*k+c)] for k = 0:n-1]
+end
+
 normalize_transition_matrix(T::AbstractMatrix) = T ./ sum(T; dims=2)
 
 """

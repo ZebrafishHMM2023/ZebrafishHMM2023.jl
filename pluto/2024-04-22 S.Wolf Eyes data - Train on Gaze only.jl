@@ -35,13 +35,13 @@ md"# Functions"
 md"# Analysis"
 
 # ╔═╡ 3c3796a8-68c9-45ca-be0d-f03694f227fc
-raw_data = ZebrafishHMM2023.wolf_eyes_20240415_data()
+raw_data = ZebrafishHMM2023.wolf_eyes_20240422_data()
 
 # ╔═╡ 463c30c9-c4c2-4042-80c9-6bc08f531b47
 num_neurons_artr = size(raw_data.left, 1) + size(raw_data.right, 1)
 
 # ╔═╡ 031f37e6-7db0-4043-a335-b0a5325b90c4
-hmm_num_states = 4
+hmm_num_states = 2
 
 # ╔═╡ 4081c0dd-85a0-4be2-af35-7bc2a00fa609
 hmm_init = ZebrafishHMM2023.HMM_Gaze(
@@ -73,7 +73,7 @@ end
 
 # ╔═╡ 72a1b761-3acc-48d5-b943-f2d217ad1ef9
 let fig = Makie.Figure()
-    ax = Makie.Axis(fig[1,1], width=500, height=500, xticks=(1:3, ["L", "F", "R"]), yticks=(1:3, ["L", "F", "R"]))
+    ax = Makie.Axis(fig[1,1], width=500, height=500, xticks=1:hmm_num_states, yticks=1:hmm_num_states)
 	plt = Makie.heatmap!(ax, float(hmm_trained.transition_matrix))
 	Makie.Colorbar(fig[1,2], plt)
     Makie.resize_to_layout!(fig)
@@ -85,9 +85,6 @@ float(sum(hmm_trained.transition_matrix; dims=2))
 
 # ╔═╡ f8a21e49-4cad-4066-a8ec-b9dd50cf98fd
 float(hmm_trained.transition_matrix)
-
-# ╔═╡ 1dc1cbd9-d5ff-447b-b190-5c2b9a1208c4
-[state.gaze for state = hmm_trained.emit]
 
 # ╔═╡ Cell order:
 # ╠═beb44192-483c-405c-832c-d6d6a5b99312
@@ -110,4 +107,3 @@ float(hmm_trained.transition_matrix)
 # ╠═72a1b761-3acc-48d5-b943-f2d217ad1ef9
 # ╠═e302a623-9e3e-4df2-967f-64425b444502
 # ╠═f8a21e49-4cad-4066-a8ec-b9dd50cf98fd
-# ╠═1dc1cbd9-d5ff-447b-b190-5c2b9a1208c4
