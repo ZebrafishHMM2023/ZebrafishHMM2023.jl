@@ -89,7 +89,7 @@ let fig = Makie.Figure()
         Makie.scatter!(ax,
             vec(mean(raw_data.left[:, viterbi_states .== s]; dims=1)),
             vec(mean(raw_data.right[:, viterbi_states .== s]; dims=1));
-            markersize=5, color=(_colors[s], 0.5), label="$s"
+            markersize=5, color=(_colors[s], 0.75), label="$s"
         )
     end
     Makie.xlims!(ax, -0.01, 0.5)
