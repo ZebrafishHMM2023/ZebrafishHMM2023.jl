@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "b91c2523500507439410c01f4556cc8191000c88"
+project_hash = "6cdb4f9807e5b86ad3db205271a14ad9bd330251"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -45,11 +45,6 @@ weakdeps = ["Dates", "LinearAlgebra"]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.1.0+0"
-
-[[deps.DampedUpdates]]
-git-tree-sha1 = "4200263e40ebbdf258e3e4c4044c2b678bb89c89"
-uuid = "c1d5de99-3441-47e2-85af-8ce5ee9923a2"
-version = "1.0.0"
 
 [[deps.DataAPI]]
 git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"

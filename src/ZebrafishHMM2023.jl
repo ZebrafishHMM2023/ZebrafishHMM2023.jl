@@ -5,7 +5,6 @@ import HiddenMarkovModels
 import LazyArtifacts
 import Random
 import StatsAPI
-using DampedUpdates: damp
 using DensityInterface: logdensityof
 using Distributions: AffineDistribution
 using Distributions: Exponential
