@@ -128,69 +128,52 @@ end
 let fig = Makie.Figure()
 	_sz = 200
 	
-	ax = Makie.Axis(fig[1,1], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
+	ax = Makie.Axis(fig[1,1], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()), xlabel="temperature", ylabel="transition rate (1/bout)")
 	Makie.scatter!(df.temperature, df.FtoF)
 	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.FtoF[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
 	Makie.ylims!(ax, 0, 1)
 	
-	ax = Makie.Axis(fig[1,2], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $L$ or $R$", xticks=collect(artr_wolf_2023_temperatures()))
+	ax = Makie.Axis(fig[1,2], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $L$ or $R$", xticks=collect(artr_wolf_2023_temperatures()), xlabel="temperature", ylabel="transition rate (1/bout)")
 	Makie.scatter!(df.temperature, df.FtoT)
 	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.FtoT[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
 	Makie.ylims!(ax, 0, 1)
 
-	ax = Makie.Axis(fig[1,3], width=_sz, height=_sz, title=L"$L$ or $R$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
-	Makie.scatter!(df.temperature, df.FtoT)
+	ax = Makie.Axis(fig[1,3], width=_sz, height=_sz, title=L"$L$ or $R$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()), xlabel="temperature", ylabel="transition rate (1/bout)")
+	Makie.scatter!(df.temperature, df.TtoF)
 	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoF[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
 	Makie.ylims!(ax, 0, 1)
 
-	ax = Makie.Axis(fig[1,4], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $L$ or $R$ $\rightarrow$ $R$", xticks=collect(artr_wolf_2023_temperatures()))
+	ax = Makie.Axis(fig[1,4], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $L$ or $R$ $\rightarrow$ $R$", xticks=collect(artr_wolf_2023_temperatures()), xlabel="temperature", ylabel="transition rate (1/bout)")
 	Makie.scatter!(df.temperature, df.TtoTsame)
 	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTsame[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
 	Makie.ylims!(ax, 0, 1)
 
-	ax = Makie.Axis(fig[1,5], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $R$ or $R$ $\rightarrow$ $L$", xticks=collect(artr_wolf_2023_temperatures()))
+	ax = Makie.Axis(fig[1,5], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $R$ or $R$ $\rightarrow$ $L$", xticks=collect(artr_wolf_2023_temperatures()), xlabel="temperature", ylabel="transition rate (1/bout)")
 	Makie.scatter!(df.temperature, df.TtoTdiff)
 	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTdiff[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
 	Makie.ylims!(ax, 0, 1)
 
-	ax = Makie.Axis(fig[2,2], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $R$ or $R$ $\rightarrow$ $L$ / $L$ or $R$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
-	Makie.scatter!(df.temperature, df.TtoTdiff ./ df.FtoT)
-	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTdiff[df.temperature .== T] ./ df.FtoT[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
+	# ax = Makie.Axis(fig[2,2], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $R$ or $R$ $\rightarrow$ $L$ / $L$ or $R$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
+	# Makie.scatter!(df.temperature, df.TtoTdiff ./ df.FtoT)
+	# Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTdiff[df.temperature .== T]) / mean(df.TtoF[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
 
 	Makie.resize_to_layout!(fig)
 	fig
 end
 
-# ╔═╡ 607219ff-e10c-48ff-adfc-d13e6e4d1437
+# ╔═╡ daf9a4f4-4ef2-4f65-b27b-2e88956133c5
 let fig = Makie.Figure()
-	_sz = 200
-	
-	ax = Makie.Axis(fig[1,1], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
-	Makie.scatter!(df.temperature, df.FtoF)
-	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.FtoF[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
-	Makie.ylims!(ax, 0, 1)
-	
-	ax = Makie.Axis(fig[1,2], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $L$ or $R$", xticks=collect(artr_wolf_2023_temperatures()))
-	Makie.scatter!(df.temperature, df.FtoT)
-	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.FtoT[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
-	Makie.ylims!(ax, 0, 1)
-
-	ax = Makie.Axis(fig[1,3], width=_sz, height=_sz, title=L"$L$ or $R$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
-	Makie.scatter!(df.temperature, df.FtoT)
-	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoF[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
-	Makie.ylims!(ax, 0, 1)
-
-	ax = Makie.Axis(fig[1,4], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $L$ or $R$ $\rightarrow$ $R$", xticks=collect(artr_wolf_2023_temperatures()))
-	Makie.scatter!(df.temperature, df.TtoTsame)
-	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTsame[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
-	Makie.ylims!(ax, 0, 1)
-
-	ax = Makie.Axis(fig[1,5], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $R$ or $R$ $\rightarrow$ $L$", xticks=collect(artr_wolf_2023_temperatures()))
-	Makie.scatter!(df.temperature, df.TtoTdiff)
-	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTdiff[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
-	Makie.ylims!(ax, 0, 1)
-
+	for (n, T) = enumerate(artr_wolf_2023_temperatures())
+	    ax = Makie.Axis(fig[1,n], width=200, height=200, xlabel="sojourn (bouts)", ylabel="frequency", yscale=log10, title="$T °C")
+	    Makie.stephist!(ax, reduce(vcat, df.sojourn_F[df.temperature .== T]), normalization=:pdf, bins=0:5:50, color=:black, label="F")
+	    Makie.stephist!(ax, reduce(vcat, df.sojourn_T[df.temperature .== T]), normalization=:pdf, bins=0:5:50, linewidth=2, color=:blue, label="L/R", linestyle=:dash)
+	    Makie.ylims!(ax, 1e-5, 1)
+	    if n == length(artr_wolf_2023_temperatures())
+			Makie.axislegend(ax)
+		end
+	end
 	Makie.resize_to_layout!(fig)
+	# Makie.save("Sel. Figures/2024-02-22 ARTR sojourn_times.pdf", fig)
 	fig
 end
 
@@ -213,4 +196,4 @@ end
 # ╠═35c75e6e-ea0d-446c-b0c3-00b88574876a
 # ╠═cc158fa3-cf45-4045-bfc1-bcc5dfc9c716
 # ╠═01115683-f37c-4b04-b233-9b91d9c0251f
-# ╠═607219ff-e10c-48ff-adfc-d13e6e4d1437
+# ╠═daf9a4f4-4ef2-4f65-b27b-2e88956133c5
