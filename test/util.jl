@@ -1,5 +1,12 @@
-using Test: @test, @testset, @inferred
-using ZebrafishHMM2023: chunks, makechunks, equal_partition, split_into_repeated_subsequences, find_repeats
+using Test: @inferred
+using Test: @test
+using Test: @test_broken
+using Test: @testset
+using ZebrafishHMM2023: chunks
+using ZebrafishHMM2023: equal_partition
+using ZebrafishHMM2023: find_repeats
+using ZebrafishHMM2023: makechunks
+using ZebrafishHMM2023: split_into_repeated_subsequences
 
 @testset "chunks" begin
     @test chunks(1:54, 5) == [1:11, 12:22, 23:33, 34:44, 45:54]
