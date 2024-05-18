@@ -7,6 +7,7 @@ import LazyArtifacts
 import Makie
 import Random
 import StatsAPI
+import DataFrames
 using DensityInterface: logdensityof
 using Distributions: AffineDistribution
 using Distributions: Exponential
