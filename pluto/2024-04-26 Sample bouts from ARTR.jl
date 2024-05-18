@@ -53,7 +53,7 @@ function sample_behavioral_states_from_artr(; temperature::Int, fish::Int)
 	trajs = collect(eachcol(vcat(data.left, data.right)))
 
 	# neural HMM
-	hmm, lL = easy_train_artr_hmm(; temperature, fish) # ARTR data time unit = 0.2s
+	hmm, lL = easy_train_artr_hmm(; temperature, fish, matteo_states_sort=true) # ARTR data time unit = 0.2s
 
 	# we will subsample using bout time intervals from behavioral data (ARTR data time unit = 0.2s)
 	subsampling_times = cumsum(rand([bout.t for traj = behavior_data_full for bout = traj], 10000)) / 0.2
