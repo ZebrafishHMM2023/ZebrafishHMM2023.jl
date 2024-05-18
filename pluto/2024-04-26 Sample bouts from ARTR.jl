@@ -11,7 +11,7 @@ import Pkg, Revise; Pkg.activate(Base.current_project())
 using DataFrames: DataFrame
 
 # ╔═╡ d41ec7d3-479b-4509-b9a2-659836462f10
-using Statistics: mean, cov, cor
+using Statistics: mean, cov, cor, middle
 
 # ╔═╡ 33afc340-77f5-4090-9e4b-b60d6abd0035
 using LinearAlgebra: eigen
@@ -20,8 +20,7 @@ using LinearAlgebra: eigen
 using HiddenMarkovModels: logdensityof, initial_distribution, viterbi
 
 # ╔═╡ 20fc0aff-0a2b-4dd9-98cf-d09ca514b81c
-using ZebrafishHMM2023: load_artr_wolf_2023, HMM_ARTR, HMM_ARTR_Log,
-    artr_wolf_2023_temperatures, artr_wolf_2023_fishes, split_into_repeated_subsequences, easy_train_artr_hmm
+using ZebrafishHMM2023: load_artr_wolf_2023, HMM_ARTR_Log, artr_wolf_2023_temperatures, artr_wolf_2023_fishes, easy_train_artr_hmm
 
 # ╔═╡ e5b56118-03ab-11ef-039b-9bbceb9fbd96
 md"# Imports"
@@ -76,45 +75,9 @@ function compute_transition_matrix_from_state_seq(state_seq::AbstractVector{Int}
 	return transition_counts ./ sum(transition_counts; dims=1)
 end
 
-# ╔═╡ 35c75e6e-ea0d-446c-b0c3-00b88574876a
-md"# Analysis"
-
-# ╔═╡ 3c2d6501-c223-43db-9939-b92b67e575c7
-temperature = 18
-
-# ╔═╡ b125dd99-3d7a-4b0b-9bee-1c0903917c35
-fish = 12
-
-# ╔═╡ cc158fa3-cf45-4045-bfc1-bcc5dfc9c716
-df = let df = DataFrame()
-
-	for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(temperature)
-	    data = load_artr_wolf_2023(; temperature, fish)
-	    trajs = collect(eachcol(vcat(data.left, data.right)))
-	
-	    time_unit = mean(diff(data.time)) # convert time bins to seconds
-	
-	    for nstates = 1:5
-	        println("temperature=$temperature, fish=$fish, nstates=$nstates ...")
-	        hmm = load_hmm(
-				"/data/cossio/projects/2023/zebrafish_hmm/Zebrafish_HMM/2024-02-20 ARTR/Saved HMMs/ARTR HMM $nstates states temperature=$(temperature), fish=$(fish).hd5", HMM_ARTR_Log
-			)
-	        ll = logdensityof(hmm, trajs) / (data.time[end] - data.time[begin])
-	        push!(df, (; temperature, fish, nstates, ll))
-	    end
-	end
-	df
-end
-
-# ╔═╡ d92b05c1-9469-4cd7-84de-ad63ef7bc070
-for fish = 
-
-# ╔═╡ 6c26d5dc-e8e6-4830-b516-b999a308685e
-subsampled_state_seq = sample_behavioral_states_from_artr(; temperature, fish)
-
 # ╔═╡ d40b21e3-3a24-4b72-8638-8d42d05429fd
 function split_by_repeats(state_seq::AbstractVector{Int})
-	return [state_seq[idx] for idx = ZebrafishHMM2023.find_repeats(subsampled_state_seq)]
+	return [state_seq[idx] for idx = ZebrafishHMM2023.find_repeats(state_seq)]
 end
 
 # ╔═╡ 0b536ae7-b231-4718-a675-25804d9d30e3
@@ -127,11 +90,39 @@ function compute_sojourns_from_state_seq(state_seq::AbstractVector{Int}; nstates
 	return sojourns
 end
 
-# ╔═╡ 01115683-f37c-4b04-b233-9b91d9c0251f
-compute_transition_matrix_from_state_seq(subsampled_state_seq)
+# ╔═╡ 35c75e6e-ea0d-446c-b0c3-00b88574876a
+md"# Analysis"
 
-# ╔═╡ a43ec3e5-34c7-4537-8bff-0b329c6dd139
-compute_sojourns_from_state_seq(subsampled_state_seq)
+# ╔═╡ cc158fa3-cf45-4045-bfc1-bcc5dfc9c716
+df = let df = DataFrame()
+	for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(temperature)
+		subsampled_state_seq = sample_behavioral_states_from_artr(; temperature, fish)
+
+		Ω = compute_transition_matrix_from_state_seq(subsampled_state_seq)
+		ts = compute_sojourns_from_state_seq(subsampled_state_seq)
+
+		push!(df, 
+			(; 
+				temperature, fish,
+			
+				# transition matrix
+				FtoF = Ω[1,1],
+				FtoT = middle(Ω[2,1], Ω[3,1]), 
+				TtoF = middle(Ω[1,2], Ω[1,3]),
+				TtoTsame = middle(Ω[2,2], Ω[3,3]),
+				TtoTdiff = middle(Ω[3,2], Ω[2,3]),
+			
+				# sojourn times
+				sojourn_F = ts[1],
+				sojourn_T = vcat(ts[2], ts[3])
+			)
+		)
+	end
+	df
+end
+
+# ╔═╡ 01115683-f37c-4b04-b233-9b91d9c0251f
+
 
 # ╔═╡ Cell order:
 # ╠═e5b56118-03ab-11ef-039b-9bbceb9fbd96
@@ -149,10 +140,5 @@ compute_sojourns_from_state_seq(subsampled_state_seq)
 # ╠═d40b21e3-3a24-4b72-8638-8d42d05429fd
 # ╠═0b536ae7-b231-4718-a675-25804d9d30e3
 # ╠═35c75e6e-ea0d-446c-b0c3-00b88574876a
-# ╠═3c2d6501-c223-43db-9939-b92b67e575c7
-# ╠═b125dd99-3d7a-4b0b-9bee-1c0903917c35
 # ╠═cc158fa3-cf45-4045-bfc1-bcc5dfc9c716
-# ╠═d92b05c1-9469-4cd7-84de-ad63ef7bc070
-# ╠═6c26d5dc-e8e6-4830-b516-b999a308685e
 # ╠═01115683-f37c-4b04-b233-9b91d9c0251f
-# ╠═a43ec3e5-34c7-4537-8bff-0b329c6dd139
