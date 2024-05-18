@@ -91,7 +91,7 @@ end
 
 function easy_train_artr_hmm(
     ; temperature::Int, fish::Int, nstates::Int = 3, verbose::Bool=false,
-    max_iterations = 200, atol = 1e-7, pseudocount=5.0
+    max_iterations = 200, atol = 1e-7, pseudocount=5.0, matteo_states_sort::Bool=false
 )
     verbose && println("Training on temperature = $temperature, fish = $fish ...")
 
@@ -108,7 +108,17 @@ function easy_train_artr_hmm(
     )
 
     # identify states corresponding to L, R, F
-    Rstate, Fstate, Lstate = sortperm([mean(hmm.h[1:Nleft, z]) - mean(hmm.h[Nleft + 1:end, z]) for z = 1:3])
+    if matteo_states_sort
+        # Matteo suggested to sort states by magnetizations instead
+        mL = dropdims(mean(data.left; dims=1); dims=1)
+        mR = dropdims(mean(data.right, dims=1); dims=1)
+        Δm = mL - mR
+
+
+    else
+        # Sort states by fields 'h'
+        Rstate, Fstate, Lstate = sortperm([mean(hmm.h[1:Nleft, z]) - mean(hmm.h[Nleft + 1:end, z]) for z = 1:3])
+    end
 
     # sort states (F = 1, L = 2, R = 3)
     hmm.transition_matrix .= hmm.transition_matrix[[Fstate, Lstate, Rstate], [Fstate, Lstate, Rstate]]
