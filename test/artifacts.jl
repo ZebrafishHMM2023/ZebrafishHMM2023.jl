@@ -1,5 +1,6 @@
+using Test: @test
+using Test: @testset
 using ZebrafishHMM2023: load_behaviour_free_swimming_data
-using Test: @testset, @test
 
 @testset "load_behaviour_free_swimming_data" begin
     data = load_behaviour_free_swimming_data(18)

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.41
+# v0.19.42
 
 using Markdown
 using InteractiveUtils
@@ -14,16 +14,10 @@ using Statistics: mean, cov, cor
 using LinearAlgebra: eigen
 
 # ╔═╡ 954538b5-3eb9-4cba-842f-f729537818d5
-using HiddenMarkovModels: logdensityof, baum_welch, transition_matrix, initial_distribution, viterbi
-
-# ╔═╡ 37a9ecc0-e2bf-42cc-a8b3-026751885eb1
-using Test: @test, @testset
-
-# ╔═╡ eab284e1-e920-40f7-b7db-809999a39482
-using LogExpFunctions: log1pexp
+using HiddenMarkovModels: logdensityof, initial_distribution, viterbi
 
 # ╔═╡ 20fc0aff-0a2b-4dd9-98cf-d09ca514b81c
-using ZebrafishHMM2023: load_artr_wolf_2023, HMM_ARTR, HMM_ARTR_Log, normalize_transition_matrix, ATol, viterbi_artr,
+using ZebrafishHMM2023: load_artr_wolf_2023, HMM_ARTR, HMM_ARTR_Log,
     artr_wolf_2023_temperatures, artr_wolf_2023_fishes, split_into_repeated_subsequences, easy_train_artr_hmm
 
 # ╔═╡ e5b56118-03ab-11ef-039b-9bbceb9fbd96
@@ -33,10 +27,7 @@ md"# Imports"
 import ZebrafishHMM2023
 
 # ╔═╡ 911e5e73-ec3d-43e9-a807-0cd6c25f5d00
-import Makie
-
-# ╔═╡ 9f0e7c5a-7f30-4108-9527-c02fbf371500
-import CairoMakie
+import Makie, CairoMakie
 
 # ╔═╡ 35c75e6e-ea0d-446c-b0c3-00b88574876a
 md"# Analysis"
@@ -93,12 +84,9 @@ subsampled_transition_counts ./ sum(subsampled_transition_counts; dims=1)
 # ╠═b5cd5128-01f9-4d63-a757-1ee9882a0f54
 # ╠═7628ddb6-420b-4b9c-98b6-73e3e5cfcac1
 # ╠═911e5e73-ec3d-43e9-a807-0cd6c25f5d00
-# ╠═9f0e7c5a-7f30-4108-9527-c02fbf371500
 # ╠═d41ec7d3-479b-4509-b9a2-659836462f10
 # ╠═33afc340-77f5-4090-9e4b-b60d6abd0035
 # ╠═954538b5-3eb9-4cba-842f-f729537818d5
-# ╠═37a9ecc0-e2bf-42cc-a8b3-026751885eb1
-# ╠═eab284e1-e920-40f7-b7db-809999a39482
 # ╠═20fc0aff-0a2b-4dd9-98cf-d09ca514b81c
 # ╠═35c75e6e-ea0d-446c-b0c3-00b88574876a
 # ╠═3c2d6501-c223-43db-9939-b92b67e575c7
