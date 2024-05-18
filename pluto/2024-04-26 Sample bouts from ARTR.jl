@@ -7,6 +7,9 @@ using InteractiveUtils
 # ╔═╡ b5cd5128-01f9-4d63-a757-1ee9882a0f54
 import Pkg, Revise; Pkg.activate(Base.current_project())
 
+# ╔═╡ 16867f62-2fd0-4e52-80c9-5962e615ee98
+using Makie: @L_str
+
 # ╔═╡ d53d040f-5998-40cc-9b7f-69da402f1cce
 using DataFrames: DataFrame
 
@@ -122,13 +125,44 @@ df = let df = DataFrame()
 end
 
 # ╔═╡ 01115683-f37c-4b04-b233-9b91d9c0251f
+let fig = Makie.Figure()
+	_sz = 200
+	
+	ax = Makie.Axis(fig[1,1], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
+	Makie.scatter!(df.temperature, df.FtoF)
+	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.FtoF[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
+	Makie.ylims!(ax, 0, 1)
+	
+	ax = Makie.Axis(fig[1,2], width=_sz, height=_sz, title=L"$F$ $\rightarrow$ $L$ or $R$", xticks=collect(artr_wolf_2023_temperatures()))
+	Makie.scatter!(df.temperature, df.FtoT)
+	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.FtoT[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
+	Makie.ylims!(ax, 0, 1)
 
+	ax = Makie.Axis(fig[1,3], width=_sz, height=_sz, title=L"$L$ or $R$ $\rightarrow$ $F$", xticks=collect(artr_wolf_2023_temperatures()))
+	Makie.scatter!(df.temperature, df.FtoT)
+	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoF[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
+	Makie.ylims!(ax, 0, 1)
+
+	ax = Makie.Axis(fig[1,4], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $L$ or $R$ $\rightarrow$ $R$", xticks=collect(artr_wolf_2023_temperatures()))
+	Makie.scatter!(df.temperature, df.TtoTsame)
+	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTsame[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
+	Makie.ylims!(ax, 0, 1)
+
+	ax = Makie.Axis(fig[1,5], width=_sz, height=_sz, title=L"$L$ $\rightarrow$ $R$ or $R$ $\rightarrow$ $L$", xticks=collect(artr_wolf_2023_temperatures()))
+	Makie.scatter!(df.temperature, df.TtoTdiff)
+	Makie.lines!(collect(artr_wolf_2023_temperatures()), [mean(df.TtoTdiff[df.temperature .== T]) for T = artr_wolf_2023_temperatures()])
+	Makie.ylims!(ax, 0, 1)
+
+	Makie.resize_to_layout!(fig)
+	fig
+end
 
 # ╔═╡ Cell order:
 # ╠═e5b56118-03ab-11ef-039b-9bbceb9fbd96
 # ╠═b5cd5128-01f9-4d63-a757-1ee9882a0f54
 # ╠═7628ddb6-420b-4b9c-98b6-73e3e5cfcac1
 # ╠═911e5e73-ec3d-43e9-a807-0cd6c25f5d00
+# ╠═16867f62-2fd0-4e52-80c9-5962e615ee98
 # ╠═d53d040f-5998-40cc-9b7f-69da402f1cce
 # ╠═d41ec7d3-479b-4509-b9a2-659836462f10
 # ╠═33afc340-77f5-4090-9e4b-b60d6abd0035
