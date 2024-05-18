@@ -109,12 +109,14 @@ function easy_train_artr_hmm(
 
     # identify states corresponding to L, R, F
     if matteo_states_sort
-        # Matteo suggested to sort states by magnetizations instead
+        # Matteo suggested to sort states by magnetizations instead of by fields
         mL = dropdims(mean(data.left; dims=1); dims=1)
         mR = dropdims(mean(data.right, dims=1); dims=1)
         Δm = mL - mR
 
-
+        states = viterbi(hmm, trajs)
+        Δm_per_state = [mean(Δm[states .== s]) for s = 1:nstates]
+        Rstate, Fstate, Lstate = sortperm(Δm_per_state)
     else
         # Sort states by fields 'h'
         Rstate, Fstate, Lstate = sortperm([mean(hmm.h[1:Nleft, z]) - mean(hmm.h[Nleft + 1:end, z]) for z = 1:3])
