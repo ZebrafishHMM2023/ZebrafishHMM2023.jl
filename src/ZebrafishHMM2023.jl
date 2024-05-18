@@ -1,8 +1,10 @@
 module ZebrafishHMM2023
 
+import CairoMakie
 import DensityInterface
 import HiddenMarkovModels
 import LazyArtifacts
+import Makie
 import Random
 import StatsAPI
 using DensityInterface: logdensityof
