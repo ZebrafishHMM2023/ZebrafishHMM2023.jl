@@ -142,46 +142,6 @@ let fig = Makie.Figure()
 	fig
 end
 
-# ╔═╡ bc39ca83-37f6-456b-b822-7b5f3caa8248
-function ordered_activity_matrix_raw_h(; temperature, fish)
-	data = load_artr_wolf_2023(; temperature, fish)
-	hmm = hmms[(; temperature, fish)].hmm
-
-	Nleft = size(data.left, 1)
-	Nright = size(data.right, 1)
-
-	_states_perm = sortperm([mean(hmm.h[1:Nleft, s]) - mean(hmm.h[(Nleft + 1):end, s]) for s = 1:3]; rev=true)
-	#_states_perm = sortperm([mean(logistic.(hmm.h[1:Nleft, s])) for s = 1:3])
-	_states_perm = _states_perm[[2,1,3]] # F, L, R
-
-	trajs = collect(eachcol(vcat(data.left, data.right)))
-	states = viterbi(hmm, trajs)
-	#Δm_per_state = [mean(Δm[states .== s]) for s = 1:nstates]
-	
-	fullmat = vcat(data.left, data.right)
-	mat = reduce(hcat, fullmat[:, states .== s] for s = _states_perm)
-	return (; mat, Nleft, Nright)
-end
-
-# ╔═╡ b8444044-2b1d-4020-bd69-5fc993077651
-activity_matrices_raw_h = Dict((; temperature, fish) => ordered_activity_matrix_raw_h(; temperature, fish) for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature))
-
-# ╔═╡ 85c2f4b7-0199-4e36-9267-b32808703a2f
-let fig = Makie.Figure()
-	_idx = 0
-	for (row, temperature) = enumerate(artr_wolf_2023_temperatures()), (col, fish) = enumerate(artr_wolf_2023_fishes(temperature))
-		mat = activity_matrices_raw_h[(; temperature, fish)].mat
-		Nleft = activity_matrices_raw_h[(; temperature, fish)].Nleft
-		Nright = activity_matrices_raw_h[(; temperature, fish)].Nright
-		
-		ax = Makie.Axis(fig[row, col], width=200, height=200, xlabel="frame", ylabel="neuron", title="T=$temperature, fish=$fish") # xticks=0:3000:20000, yticks=0:100:1000
-		Makie.heatmap!(ax, 1:size(mat, 2), 1:Nleft, mat[1:Nleft, :]'; colormap=:bam, colorrange=(-1, 1))
-		Makie.heatmap!(ax, 1:size(mat, 2), (Nleft + 1):(Nleft + Nright), mat[(Nleft + 1):(Nleft + Nright), :]'; colormap=Makie.Reverse(:bam), colorrange=(-1, 1))
-	end
-	Makie.resize_to_layout!(fig)
-	fig
-end
-
 # ╔═╡ Cell order:
 # ╠═ea9dbc64-2018-11ef-2925-cb2372b98475
 # ╠═167996be-274e-44b7-8cb0-2dc6bebaa57c
@@ -209,6 +169,3 @@ end
 # ╠═026c05f2-dcb4-435a-ba72-d1c1a9a53b76
 # ╠═58b1111b-3ae9-4708-a1b7-3bb6c7b55ed1
 # ╠═d254d431-4bbc-458b-9816-fc7040761078
-# ╠═bc39ca83-37f6-456b-b822-7b5f3caa8248
-# ╠═b8444044-2b1d-4020-bd69-5fc993077651
-# ╠═85c2f4b7-0199-4e36-9267-b32808703a2f
