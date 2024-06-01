@@ -70,3 +70,29 @@ end
 function wolf_eyes_20240501_run_03_data_dir()
     return artifact"Wolf_Eyes_ARTR_Data_20240601_run_03"
 end
+
+function wolf_eyes_20240501_run_data(run::Int)
+    @assert run == 2 || run == 3
+
+    if run == 2
+        dirpath = wolf_eyes_20240501_run_02_data_dir()
+    else
+        dirpath = wolf_eyes_20240501_run_03_data_dir()
+    end
+
+    left = matread(joinpath(dirpath, "ARTR neural signals", "A_Left_ARTR.mat"))["A_Left_ARTR"]
+    right = matread(joinpath(dirpath, "ARTR neural signals", "A_Right_ARTR.mat"))["A_Right_ARTR"]
+    corr_left = matread(joinpath(dirpath, "ARTR neural signals", "DFF_corr_Left_ARTR.mat"))["DFF_corr_Left_ARTR"]
+    corr_right = matread(joinpath(dirpath, "ARTR neural signals", "DFF_corr_Right_ARTR.mat"))["DFF_corr_Right_ARTR"]
+
+    D_struct = matread(joinpath(dirpath, "2014-12-19-run$run.mat"))["D"]
+    position = D_struct["position"]
+    timeplusleft = D_struct["timeplusleft"]
+    timeplusright = D_struct["timeplusright"]
+    timeminusleft = D_struct["timeminusleft"]
+    timeminusright = D_struct["timeminusright"]
+
+    gaze = (position[:,3] - position[:,6]) / 2
+
+    return (; left, right, corr_left, corr_right, position, timeplusleft, timeplusright, timeminusleft, timeminusright, gaze)
+end
