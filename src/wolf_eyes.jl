@@ -61,3 +61,12 @@ function wolf_eyes_20240422_data()
 
     return (; left, right, corr_left, corr_right, position, timeplusleft, timeplusright, timeminusleft, timeminusright, gaze)
 end
+
+#= Eye movement data, with new thresholds, 20240501, from S.Wolf =#
+function wolf_eyes_20240501_run_02_data_dir()
+    return artifact"Wolf_Eyes_ARTR_Data_20240601_run_02"
+end
+
+function wolf_eyes_20240501_run_03_data_dir()
+    return artifact"Wolf_Eyes_ARTR_Data_20240601_run_03"
+end
