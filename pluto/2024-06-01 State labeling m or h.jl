@@ -71,17 +71,91 @@ md"# Train all HMMs"
 hmms = Dict((; temperature, fish) => easy_train_artr_hmm(; temperature, fish, matteo_states_sort=true) for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature))
 
 # ╔═╡ c14c376f-9b89-4787-b02f-98bbf05b1a32
-function ordered_activity_matrix(; temperature, fish)
+function ordered_activity_matrix_sigmoid(; temperature, fish)
 	data = load_artr_wolf_2023(; temperature, fish)
 	hmm = hmms[(; temperature, fish)].hmm
 
 	Nleft = size(data.left, 1)
-	Nright = size(data.right, 2)
+	Nright = size(data.right, 1)
 
-	_states_perm = sortperm([mean(logistic.(hmm.h[1:Nleft, s])) for s = 1:3])
+	Δ_sigmoid_h = [mean(logistic.(hmm.h[1:Nleft, s])) - mean(logistic.(hmm.h[(Nleft + 1):end, s])) for s = 1:3]
+	Δ_raw_h = [mean(hmm.h[1:Nleft, s]) - mean(hmm.h[(Nleft + 1):end, s]) for s = 1:3]
 
-	#trajs = collect(eachcol(vcat(data.left, data.right)))
-	#states = viterbi(hmm, trajs)
+	_states_perm = sortperm(Δ_sigmoid_h; rev=true)
+	_states_perm = _states_perm[[2,1,3]] # F, L, R
+	#_states_perm = sortperm([mean(logistic.(hmm.h[1:Nleft, s])) for s = 1:3])
+
+	trajs = collect(eachcol(vcat(data.left, data.right)))
+	states = viterbi(hmm, trajs)
+	#Δm_per_state = [mean(Δm[states .== s]) for s = 1:nstates]
+	
+	fullmat = vcat(data.left, data.right)
+	mat = reduce(hcat, fullmat[:, states .== s] for s = _states_perm)
+
+	mL = [mean(data.left[:, states .== s]) for s = _states_perm]
+	mR = [mean(data.right[:, states .== s]) for s = _states_perm]
+	Δm = mL - mR
+	
+	return (; mat, Nleft, Nright, Δ_sigmoid_h = Δ_sigmoid_h[_states_perm], Δm, Δ_raw_h = Δ_raw_h[_states_perm])
+end
+
+# ╔═╡ 026c05f2-dcb4-435a-ba72-d1c1a9a53b76
+activity_matrices_sigmoid = Dict((; temperature, fish) => ordered_activity_matrix_sigmoid(; temperature, fish) for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature))
+
+# ╔═╡ 58b1111b-3ae9-4708-a1b7-3bb6c7b55ed1
+let fig = Makie.Figure()
+	_idx = 0
+	for (row, temperature) = enumerate(artr_wolf_2023_temperatures()), (col, fish) = enumerate(artr_wolf_2023_fishes(temperature))
+		mat = activity_matrices_sigmoid[(; temperature, fish)].mat
+		Nleft = activity_matrices_sigmoid[(; temperature, fish)].Nleft
+		Nright = activity_matrices_sigmoid[(; temperature, fish)].Nright
+		
+		ax = Makie.Axis(fig[row, col], width=200, height=200, xlabel="frame", ylabel="neuron", title="T=$temperature, fish=$fish")
+		Makie.heatmap!(ax, 1:size(mat, 2), 1:Nleft, mat[1:Nleft, :]'; colormap=:bam, colorrange=(-1, 1))
+		Makie.heatmap!(ax, 1:size(mat, 2), (Nleft + 1):(Nleft + Nright), mat[(Nleft + 1):(Nleft + Nright), :]'; colormap=Makie.Reverse(:bam), colorrange=(-1, 1))
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ d254d431-4bbc-458b-9816-fc7040761078
+let fig = Makie.Figure()
+	for (row, temperature) = enumerate(artr_wolf_2023_temperatures()), (col, fish) = enumerate(artr_wolf_2023_fishes(temperature))
+		mat = activity_matrices_sigmoid[(; temperature, fish)].mat
+		Nleft = activity_matrices_sigmoid[(; temperature, fish)].Nleft
+		Nright = activity_matrices_sigmoid[(; temperature, fish)].Nright
+
+		Δ_sigmoid_h = activity_matrices_sigmoid[(; temperature, fish)].Δ_sigmoid_h
+		Δm = activity_matrices_sigmoid[(; temperature, fish)].Δm
+		Δh = activity_matrices_sigmoid[(; temperature, fish)].Δ_raw_h
+		
+		ax = Makie.Axis(fig[row, col], width=200, height=200, title="T=$temperature, fish=$fish", xticks=(1:3, ["F", "L", "R"]), ylabel="m", xgridvisible=false, ygridvisible=false)
+		Makie.scatterlines!(ax, 1:3, Δm; label="Δm", markersize=10)
+		Makie.scatterlines!(ax, 1:3, Δ_sigmoid_h; label="Δσ(h)", markersize=2)
+		Makie.axislegend(ax, position=:cb)
+
+		ax = Makie.Axis(fig[row, col], width=200, height=200, yticklabelcolor=:red, yaxisposition=:right, ylabel="h", xgridvisible=false, ygridvisible=false)
+		Makie.lines!(ax, 1:3, Δh; label="Δm", color=:red, linestyle=:dash)
+		Makie.hidexdecorations!(ax)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ bc39ca83-37f6-456b-b822-7b5f3caa8248
+function ordered_activity_matrix_raw_h(; temperature, fish)
+	data = load_artr_wolf_2023(; temperature, fish)
+	hmm = hmms[(; temperature, fish)].hmm
+
+	Nleft = size(data.left, 1)
+	Nright = size(data.right, 1)
+
+	_states_perm = sortperm([mean(hmm.h[1:Nleft, s]) - mean(hmm.h[(Nleft + 1):end, s]) for s = 1:3]; rev=true)
+	#_states_perm = sortperm([mean(logistic.(hmm.h[1:Nleft, s])) for s = 1:3])
+	_states_perm = _states_perm[[2,1,3]] # F, L, R
+
+	trajs = collect(eachcol(vcat(data.left, data.right)))
+	states = viterbi(hmm, trajs)
 	#Δm_per_state = [mean(Δm[states .== s]) for s = 1:nstates]
 	
 	fullmat = vcat(data.left, data.right)
@@ -89,42 +163,24 @@ function ordered_activity_matrix(; temperature, fish)
 	return (; mat, Nleft, Nright)
 end
 
-# ╔═╡ 026c05f2-dcb4-435a-ba72-d1c1a9a53b76
-activity_matrices = Dict((; temperature, fish) => ordered_activity_matrix(; temperature, fish) for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature))
+# ╔═╡ b8444044-2b1d-4020-bd69-5fc993077651
+activity_matrices_raw_h = Dict((; temperature, fish) => ordered_activity_matrix_raw_h(; temperature, fish) for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature))
 
-# ╔═╡ 58b1111b-3ae9-4708-a1b7-3bb6c7b55ed1
+# ╔═╡ 85c2f4b7-0199-4e36-9267-b32808703a2f
 let fig = Makie.Figure()
 	_idx = 0
 	for (row, temperature) = enumerate(artr_wolf_2023_temperatures()), (col, fish) = enumerate(artr_wolf_2023_fishes(temperature))
-		# _idx += 1
-		# row, col = fldmod1(_idx, 4)
-
-		# _min, _max = extrema(activity_matrices[(; temperature, fish)].mat)
-		# if !(_min < 0 < _max)
-		# 	@info "Failed for T=$temperature, fish=$fish. Got _min=$_min, _max=$_max"
-		# else
-
-		# 	_mat = zero(activity_matrices[(; temperature, fish)].mat)
-		# 	for i = eachindex(_mat)
-		# 		x = activity_matrices[(; temperature, fish)].mat[i]
-		# 		if x ≥ 0
-		# 			_mat[i] = x ./ abs(_max)
-		# 		else
-		# 			_mat[i] = x ./ abs(_min)
-		# 		end
-		# 	end
-			
-		# end
+		mat = activity_matrices_raw_h[(; temperature, fish)].mat
+		Nleft = activity_matrices_raw_h[(; temperature, fish)].Nleft
+		Nright = activity_matrices_raw_h[(; temperature, fish)].Nright
 		
-		ax = Makie.Axis(fig[row, col], width=200, height=200, xlabel="frame", ylabel="neuron", title="T=$temperature, fish=$fish", xticks=0:3000:20000, yticks=0:100:1000)
-		Makie.image!(ax, activity_matrices[(; temperature, fish)].mat'; colormap=:bam, colorrange=(0, 1))
+		ax = Makie.Axis(fig[row, col], width=200, height=200, xlabel="frame", ylabel="neuron", title="T=$temperature, fish=$fish") # xticks=0:3000:20000, yticks=0:100:1000
+		Makie.heatmap!(ax, 1:size(mat, 2), 1:Nleft, mat[1:Nleft, :]'; colormap=:bam, colorrange=(-1, 1))
+		Makie.heatmap!(ax, 1:size(mat, 2), (Nleft + 1):(Nleft + Nright), mat[(Nleft + 1):(Nleft + Nright), :]'; colormap=Makie.Reverse(:bam), colorrange=(-1, 1))
 	end
 	Makie.resize_to_layout!(fig)
 	fig
 end
-
-# ╔═╡ c2949166-eb86-4ed2-b300-b9bf34753503
-extrema(randn(10, 4))
 
 # ╔═╡ Cell order:
 # ╠═ea9dbc64-2018-11ef-2925-cb2372b98475
@@ -152,4 +208,7 @@ extrema(randn(10, 4))
 # ╠═c14c376f-9b89-4787-b02f-98bbf05b1a32
 # ╠═026c05f2-dcb4-435a-ba72-d1c1a9a53b76
 # ╠═58b1111b-3ae9-4708-a1b7-3bb6c7b55ed1
-# ╠═c2949166-eb86-4ed2-b300-b9bf34753503
+# ╠═d254d431-4bbc-458b-9816-fc7040761078
+# ╠═bc39ca83-37f6-456b-b822-7b5f3caa8248
+# ╠═b8444044-2b1d-4020-bd69-5fc993077651
+# ╠═85c2f4b7-0199-4e36-9267-b32808703a2f
