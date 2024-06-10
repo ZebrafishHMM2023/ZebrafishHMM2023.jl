@@ -162,6 +162,12 @@ artr_hmms = Dict(
 	for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature)
 )
 
+# ╔═╡ aa26f84c-49d3-4f14-bc32-e3c3858f4b39
+md"# Comparison of sojourn times"
+
+# ╔═╡ a8a8c8aa-3def-4b5c-a7c4-cbb09f0d63ad
+
+
 # ╔═╡ Cell order:
 # ╠═ae9a7803-3ddf-4fcc-9b15-6b970797b4cb
 # ╠═bfb8b4b5-eee8-47a5-8f55-e23ad3ddbaa9
@@ -198,3 +204,5 @@ artr_hmms = Dict(
 # ╠═277b0cb0-a3de-4fc5-8720-9d5e8846e81f
 # ╠═ebefc691-9bf9-4376-a74e-bf56e5ddb065
 # ╠═c5c12295-e495-480e-899b-22745ad9f4e6
+# ╠═aa26f84c-49d3-4f14-bc32-e3c3858f4b39
+# ╠═a8a8c8aa-3def-4b5c-a7c4-cbb09f0d63ad
