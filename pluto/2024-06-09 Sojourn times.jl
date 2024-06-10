@@ -13,6 +13,12 @@ using Makie: @L_str
 # ╔═╡ 76c368ee-0aa9-4d8e-b815-d006ec9ae3db
 using DataFrames: DataFrame
 
+# ╔═╡ ae8c1c55-37ef-4a32-b034-ab84e8d94c1e
+using Statistics: std
+
+# ╔═╡ f6ce0fe7-d97a-4926-9151-607d12e05b44
+using Statistics: var
+
 # ╔═╡ 6d94d933-8409-47ec-9e42-9bb0816f0d2f
 using Statistics: mean
 
@@ -24,6 +30,9 @@ using Statistics: cor
 
 # ╔═╡ fbed3295-c9d4-4f08-800e-8e795c2599e9
 using Statistics: middle
+
+# ╔═╡ 86f6cf49-ac45-42dd-b974-e04ba90d4a8c
+using StatsBase: corspearman
 
 # ╔═╡ a08cd4f3-e666-4b45-980f-ea7805dbbb2d
 using LinearAlgebra: eigen
@@ -158,15 +167,141 @@ end
 
 # ╔═╡ c5c12295-e495-480e-899b-22745ad9f4e6
 artr_hmms = Dict(
-	artr_train_hmm(; temperature, fish)
+	(; temperature, fish) => artr_train_hmm(; temperature, fish)
 	for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature)
 )
 
 # ╔═╡ aa26f84c-49d3-4f14-bc32-e3c3858f4b39
 md"# Comparison of sojourn times"
 
-# ╔═╡ a8a8c8aa-3def-4b5c-a7c4-cbb09f0d63ad
+# ╔═╡ 9b77049b-9c3b-4ed8-838f-df958224763d
+let fig = Makie.Figure()
+	bins = 0:2:40
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())
+		ylabel = i == 1 ? "Forw." : ""
+		ax = Makie.Axis(fig[1,i]; width=200, height=150, yscale=log10, title="Temp. $T", xlabel="Sojourn time (sec.)", ylabel)
+		Makie.stephist!(ax, swimming_hmms[T].times_F; bins, normalization=:pdf, label="Swim")
+		Makie.stephist!(ax, [t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F]; bins, normalization=:pdf, label="ARTR")
+		Makie.ylims!(ax, 1e-5, 1)
 
+		ylabel = i == 1 ? "Turn" : ""
+		ax = Makie.Axis(fig[2,i]; width=200, height=150, yscale=log10, xlabel="Sojourn time (sec.)", ylabel)
+		Makie.stephist!(ax, [swimming_hmms[T].times_L; swimming_hmms[T].times_R]; bins, normalization=:pdf, label="Swim")
+		Makie.stephist!(ax, [t for fish = artr_wolf_2023_fishes(T) for ts = [artr_hmms[(; temperature=T, fish)].times_L, artr_hmms[(; temperature=T, fish)].times_R] for t = ts]; bins, normalization=:pdf, label="ARTR")
+		Makie.ylims!(ax, 1e-5, 1)
+
+		if i == 5
+			Makie.axislegend(ax, position=:rt)
+		end
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ cc947aef-3e96-4d66-a374-209330b25f77
+let fig = Makie.Figure()
+	bins = 0:20
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())
+		λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
+
+		ylabel = i == 1 ? "Forw." : ""
+		ax = Makie.Axis(fig[1,i]; width=200, height=150, yscale=log10, title="Temp. $T", xlabel="Sojourn time (sec.)", ylabel)
+		Makie.stephist!(ax, swimming_hmms[T].times_F; bins, normalization=:pdf, label="Swim")
+		Makie.stephist!(ax, [λ * t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F]; bins, normalization=:pdf, label="ARTR")
+		Makie.ylims!(ax, 1e-4, 2)
+
+		ylabel = i == 1 ? "Turn" : ""
+		ax = Makie.Axis(fig[2,i]; width=200, height=150, yscale=log10, xlabel="Sojourn time (sec.)", ylabel)
+		Makie.stephist!(ax, swimming_hmms[T].times_L; bins, normalization=:pdf, label="Swim")
+		Makie.stephist!(ax, [λ * t for fish = artr_wolf_2023_fishes(T) for ts = [artr_hmms[(; temperature=T, fish)].times_L, artr_hmms[(; temperature=T, fish)].times_R] for t = ts]; bins, normalization=:pdf, label="ARTR")
+		Makie.ylims!(ax, 1e-4, 2)
+
+		if i == 5
+			Makie.axislegend(ax, position=:rt)
+		end
+	end
+	
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ 9e0f76ea-a3da-46f9-9bc2-7fa79b2e8b60
+let fig = Makie.Figure()
+	scaling_factors = [mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F) for T = artr_wolf_2023_temperatures()]
+
+	ax = Makie.Axis(fig[1,1]; width=400, height=300, xlabel="Temperature", ylabel="Scaling factor (Swim / ARTR)", xticks=collect(artr_wolf_2023_temperatures()))	
+	Makie.scatterlines!(ax, collect(artr_wolf_2023_temperatures()), scaling_factors)
+	
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ 9a9c5dee-ac20-4828-a6ac-586a5fec69cf
+artr_transition_matrices = Dict(
+	temperature => mean([artr_hmms[(; temperature, fish)].hmm.transition_matrix for fish = artr_wolf_2023_fishes(temperature)]) for temperature = artr_wolf_2023_temperatures()
+)
+
+# ╔═╡ 258bac77-b65d-49c4-9c1a-bd397ad7ed6a
+swimming_transition_matrices = Dict(
+	temperature => swimming_hmms[temperature].hmm.transition_matrix for temperature = behaviour_free_swimming_temperatures()
+)
+
+# ╔═╡ cc268bdd-6c1b-4455-bcf9-7856e100a307
+let fig = Makie.Figure()
+	ax = Makie.Axis(fig[1,1], xlabel="ARTR", ylabel="Swim", width=400, height=400)
+	colors = [:blue, :teal, :green, :orange, :red]
+
+	corspearman(vec(artr_transition_matrices[T]), vec(swimming_transition_matrices[T]))
+	
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())		
+		Makie.scatter!(ax, vec(artr_transition_matrices[T]), vec(swimming_transition_matrices[T]), color=colors[i])
+	end
+	Makie.xlims!(ax, 0, 1)
+	Makie.ylims!(ax, 0, 1)
+
+	ax = Makie.Axis(fig[1,2], xlabel="ARTR (scaled)", ylabel="Swim", width=400, height=400)
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())
+		λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
+		
+		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)^(1/λ)
+		artr_trans = mean([float(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix) for fish = artr_wolf_2023_fishes(T)])
+
+		Makie.scatter!(ax, vec(real(artr_trans)), vec(real(swim_trans)), color=colors[i])
+	end
+	Makie.xlims!(ax, 0, 1)
+	Makie.ylims!(ax, 0, 1)
+
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ e4f1c1dc-8bfd-4949-b83e-168f7667face
+let fig = Makie.Figure()
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())
+		λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
+
+
+		# times are multiplied by λ, thus rates are multiplied by 1/λ
+		
+		ax = Makie.Axis(fig[1,i], title="Temp. $T", xlabel="ARTR (scaled)", ylabel="Swim", width=200, height=200)
+		Makie.scatter!(ax, vec(artr_transition_matrices[T]) / λ, vec(swimming_transition_matrices[T]))
+		Makie.xlims!(ax, 0, 1)
+		Makie.ylims!(ax, 0, 1)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ 09b4133a-5b3a-48e3-96b7-fbd50e105cdb
+for t = artr_wolf_2023_temperatures()
+	artr_transition_matrices[t] ./ swimming_transition_matrices[t]
+end
+
+# ╔═╡ a8a8c8aa-3def-4b5c-a7c4-cbb09f0d63ad
+artr_wolf_2023_temperatures()
+
+# ╔═╡ 69fdd3fd-90f8-4887-923d-8a30394fa907
+behaviour_free_swimming_temperatures()
 
 # ╔═╡ Cell order:
 # ╠═ae9a7803-3ddf-4fcc-9b15-6b970797b4cb
@@ -176,10 +311,13 @@ md"# Comparison of sojourn times"
 # ╠═5d9d1329-8faf-46f6-aac3-aee7bd9b8065
 # ╠═2bcdddad-4227-4c56-b452-cff43bec2d41
 # ╠═76c368ee-0aa9-4d8e-b815-d006ec9ae3db
+# ╠═ae8c1c55-37ef-4a32-b034-ab84e8d94c1e
+# ╠═f6ce0fe7-d97a-4926-9151-607d12e05b44
 # ╠═6d94d933-8409-47ec-9e42-9bb0816f0d2f
 # ╠═71ee1b22-360b-44fa-a1d3-d03bdf2b13da
 # ╠═83bf9b96-f048-418a-b712-b240002f7f0f
 # ╠═fbed3295-c9d4-4f08-800e-8e795c2599e9
+# ╠═86f6cf49-ac45-42dd-b974-e04ba90d4a8c
 # ╠═a08cd4f3-e666-4b45-980f-ea7805dbbb2d
 # ╠═05bfd1b2-43f0-4259-adb8-a378549e9a71
 # ╠═d3289663-20d4-46a9-9795-4c5fe5cd30b7
@@ -205,4 +343,13 @@ md"# Comparison of sojourn times"
 # ╠═ebefc691-9bf9-4376-a74e-bf56e5ddb065
 # ╠═c5c12295-e495-480e-899b-22745ad9f4e6
 # ╠═aa26f84c-49d3-4f14-bc32-e3c3858f4b39
+# ╠═9b77049b-9c3b-4ed8-838f-df958224763d
+# ╠═cc947aef-3e96-4d66-a374-209330b25f77
+# ╠═9e0f76ea-a3da-46f9-9bc2-7fa79b2e8b60
+# ╠═9a9c5dee-ac20-4828-a6ac-586a5fec69cf
+# ╠═258bac77-b65d-49c4-9c1a-bd397ad7ed6a
+# ╠═cc268bdd-6c1b-4455-bcf9-7856e100a307
+# ╠═e4f1c1dc-8bfd-4949-b83e-168f7667face
+# ╠═09b4133a-5b3a-48e3-96b7-fbd50e105cdb
 # ╠═a8a8c8aa-3def-4b5c-a7c4-cbb09f0d63ad
+# ╠═69fdd3fd-90f8-4887-923d-8a30394fa907

@@ -1,13 +1,14 @@
 module ZebrafishHMM2023
 
 import CairoMakie
+import DataFrames
 import DensityInterface
 import HiddenMarkovModels
 import LazyArtifacts
 import Makie
 import Random
 import StatsAPI
-import DataFrames
+import StatsBase
 using HiddenMarkovModels: viterbi
 using DensityInterface: logdensityof
 using Distributions: AffineDistribution
