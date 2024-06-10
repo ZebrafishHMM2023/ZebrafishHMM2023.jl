@@ -40,9 +40,6 @@ using HiddenMarkovModels: logdensityof
 # ╔═╡ 00ebdd2d-d7a6-444a-a548-285b228af912
 using HiddenMarkovModels: initial_distribution
 
-# ╔═╡ 7a57a2d1-1599-47c1-95b3-bff09c431ae6
-using HiddenMarkovModels: viterbi
-
 # ╔═╡ 0a4ea7ef-7372-4c6b-ad74-2e18db46694e
 using ZebrafishHMM2023: load_artr_wolf_2023
 
@@ -151,7 +148,7 @@ function compute_sojourns_from_state_seq(state_seq::AbstractVector{Int}; nstates
 end
 
 # ╔═╡ 35c75e6e-ea0d-446c-b0c3-00b88574876a
-md"# ARTR resampled sojourn times"
+md"# ARTR resampled sojourn times (in bouts)"
 
 # ╔═╡ cc158fa3-cf45-4045-bfc1-bcc5dfc9c716
 df = let df = DataFrame()
@@ -234,48 +231,6 @@ let fig = Makie.Figure()
 	fig
 end
 
-# ╔═╡ de11c784-09f3-4628-aa9a-aed4109aa20f
-md"# Swimming sojourn times"
-
-# ╔═╡ 08556ff5-d2c9-4320-8f69-bec233e5cd56
-find_repeats([1,1,3,2,1,1,2,2,3])
-
-# ╔═╡ 5a16b436-ec76-461c-92a1-9176f534d7bc
-function swimming_train_hmm(T)
-	@info "Training model for swimming at temperature = $T"
-    trajs = load_behaviour_free_swimming_trajs(T)
-
-    trajs = filter(traj -> all(!iszero, traj), trajs) # zeros give trouble sometimes
-    hmm = normalize_all!(ZebrafishHMM_G3_Sym(rand(), rand(3,3), 1.0, Gamma(1.5, 20.0), 1.0))
-    (hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 500, check_loglikelihood_increasing = false, atol = ATol(1e-6))
-
-	seqs = viterbi(hmm, trajs, length(trajs))
-
-	all_times = [filter(!isnan, t) for t = eachcol(load_behaviour_free_swimming_data(T).bouttime)]
-
-	times_F = Float64[]
-	times_L = Float64[]
-	times_R = Float64[]
-	
-	for (s, t) = zip(seqs, all_times)
-        reps = find_repeats(s)
-		@show s reps
-
-		for r = reps
-			@assert allequal(s[r])
-		end
-
-        append!(times_F, [t[last(r) + 1] - t[first(r)] for r = reps if s[first(r)] == 1])
-        append!(times_L, [t[last(r) + 1] - t[first(r)] for r = reps if s[first(r)] == 2])
-        append!(times_R, [t[last(r) + 1] - t[first(r)] for r = reps if s[first(r)] == 3])
-    end
-
-    return (; hmm, lL, times_F, times_L, times_R)
-end
-
-# ╔═╡ ee54b5fa-3d29-4b4d-8ade-7d1b18c5f01b
-swimming_hmms = Dict(T => swimming_train_hmm(T) for T = behaviour_free_swimming_temperatures())
-
 # ╔═╡ Cell order:
 # ╠═e5b56118-03ab-11ef-039b-9bbceb9fbd96
 # ╠═b5cd5128-01f9-4d63-a757-1ee9882a0f54
@@ -293,7 +248,6 @@ swimming_hmms = Dict(T => swimming_train_hmm(T) for T = behaviour_free_swimming_
 # ╠═9c5c3dc2-154b-4893-9292-98c945e7ed86
 # ╠═3eb94a23-113e-4c2b-a966-452b33caadf1
 # ╠═00ebdd2d-d7a6-444a-a548-285b228af912
-# ╠═7a57a2d1-1599-47c1-95b3-bff09c431ae6
 # ╠═0a4ea7ef-7372-4c6b-ad74-2e18db46694e
 # ╠═2ed3be3a-f935-4a28-95e1-ab3f209cb494
 # ╠═a6ff3c4e-f9d5-416b-84e8-f02ccda113dd
@@ -315,7 +269,3 @@ swimming_hmms = Dict(T => swimming_train_hmm(T) for T = behaviour_free_swimming_
 # ╠═cc158fa3-cf45-4045-bfc1-bcc5dfc9c716
 # ╠═01115683-f37c-4b04-b233-9b91d9c0251f
 # ╠═daf9a4f4-4ef2-4f65-b27b-2e88956133c5
-# ╠═de11c784-09f3-4628-aa9a-aed4109aa20f
-# ╠═08556ff5-d2c9-4320-8f69-bec233e5cd56
-# ╠═5a16b436-ec76-461c-92a1-9176f534d7bc
-# ╠═ee54b5fa-3d29-4b4d-8ade-7d1b18c5f01b
