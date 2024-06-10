@@ -28,6 +28,12 @@ using Statistics: middle
 # ╔═╡ 33afc340-77f5-4090-9e4b-b60d6abd0035
 using LinearAlgebra: eigen
 
+# ╔═╡ 16a74c00-d4f6-4b6c-a7bf-6096333ccb9d
+using Distributions: Gamma
+
+# ╔═╡ 9c5c3dc2-154b-4893-9292-98c945e7ed86
+using HiddenMarkovModels: baum_welch
+
 # ╔═╡ 3eb94a23-113e-4c2b-a966-452b33caadf1
 using HiddenMarkovModels: logdensityof
 
@@ -52,14 +58,37 @@ using ZebrafishHMM2023: artr_wolf_2023_fishes
 # ╔═╡ 1d8a6197-f25c-4c4f-aea7-87f261bf892a
 using ZebrafishHMM2023: easy_train_artr_hmm
 
+# ╔═╡ ae32a09d-4b39-456a-9b17-b72b14da2457
+using ZebrafishHMM2023: behaviour_free_swimming_temperatures
+
+# ╔═╡ 2ade4518-1ef4-4f59-a8c8-a90531ee421e
+using ZebrafishHMM2023: load_behaviour_free_swimming_data
+
+# ╔═╡ 2b0d13b1-cff1-4183-ad08-79c83e9cc2a5
+using ZebrafishHMM2023: load_behaviour_free_swimming_trajs
+
+# ╔═╡ ebcfb5a4-2aa7-477c-a911-15cf60c6a35e
+using ZebrafishHMM2023: ZebrafishHMM_G3_Sym
+
+# ╔═╡ ff056014-160a-4228-9a1e-bfb0c85653e9
+using ZebrafishHMM2023: find_repeats
+
+# ╔═╡ 582c74a3-0ec8-4706-99dd-410fa0bd2a5a
+using ZebrafishHMM2023: normalize_all!
+
+# ╔═╡ f394a010-23ae-43fb-8cab-c0b9228c37cd
+using ZebrafishHMM2023: ATol
+
 # ╔═╡ e5b56118-03ab-11ef-039b-9bbceb9fbd96
 md"# Imports"
 
 # ╔═╡ 7628ddb6-420b-4b9c-98b6-73e3e5cfcac1
 import ZebrafishHMM2023
 
-# ╔═╡ 911e5e73-ec3d-43e9-a807-0cd6c25f5d00
+# ╔═╡ 259f6749-37a8-45c3-a32d-fa678cb81fe5
 import Makie
+
+# ╔═╡ d2dbc9b0-1ace-4c90-8706-4fc28fbe3a0c
 import CairoMakie
 
 # ╔═╡ d9b31996-0b41-407e-b017-f41a662f4bf8
@@ -208,6 +237,9 @@ end
 # ╔═╡ de11c784-09f3-4628-aa9a-aed4109aa20f
 md"# Swimming sojourn times"
 
+# ╔═╡ 08556ff5-d2c9-4320-8f69-bec233e5cd56
+find_repeats([1,1,3,2,1,1,2,2,3])
+
 # ╔═╡ 5a16b436-ec76-461c-92a1-9176f534d7bc
 function swimming_train_hmm(T)
 	@info "Training model for swimming at temperature = $T"
@@ -217,14 +249,21 @@ function swimming_train_hmm(T)
     hmm = normalize_all!(ZebrafishHMM_G3_Sym(rand(), rand(3,3), 1.0, Gamma(1.5, 20.0), 1.0))
     (hmm, lL) = baum_welch(hmm, trajs, length(trajs); max_iterations = 500, check_loglikelihood_increasing = false, atol = ATol(1e-6))
 
+	seqs = viterbi(hmm, trajs, length(trajs))
+
 	all_times = [filter(!isnan, t) for t = eachcol(load_behaviour_free_swimming_data(T).bouttime)]
 
 	times_F = Float64[]
 	times_L = Float64[]
 	times_R = Float64[]
 	
-	for (s, t) = zip(seqs, times)
+	for (s, t) = zip(seqs, all_times)
         reps = find_repeats(s)
+		@show s reps
+
+		for r = reps
+			@assert allequal(s[r])
+		end
 
         append!(times_F, [t[last(r) + 1] - t[first(r)] for r = reps if s[first(r)] == 1])
         append!(times_L, [t[last(r) + 1] - t[first(r)] for r = reps if s[first(r)] == 2])
@@ -241,7 +280,8 @@ swimming_hmms = Dict(T => swimming_train_hmm(T) for T = behaviour_free_swimming_
 # ╠═e5b56118-03ab-11ef-039b-9bbceb9fbd96
 # ╠═b5cd5128-01f9-4d63-a757-1ee9882a0f54
 # ╠═7628ddb6-420b-4b9c-98b6-73e3e5cfcac1
-# ╠═911e5e73-ec3d-43e9-a807-0cd6c25f5d00
+# ╠═259f6749-37a8-45c3-a32d-fa678cb81fe5
+# ╠═d2dbc9b0-1ace-4c90-8706-4fc28fbe3a0c
 # ╠═16867f62-2fd0-4e52-80c9-5962e615ee98
 # ╠═d53d040f-5998-40cc-9b7f-69da402f1cce
 # ╠═92e5f7e3-3f4d-4f78-92c1-c701ea663b38
@@ -249,6 +289,8 @@ swimming_hmms = Dict(T => swimming_train_hmm(T) for T = behaviour_free_swimming_
 # ╠═9ca878bb-5f40-4c25-aa5c-fba350b37e76
 # ╠═955d0b51-d267-4f9d-a773-db841daece52
 # ╠═33afc340-77f5-4090-9e4b-b60d6abd0035
+# ╠═16a74c00-d4f6-4b6c-a7bf-6096333ccb9d
+# ╠═9c5c3dc2-154b-4893-9292-98c945e7ed86
 # ╠═3eb94a23-113e-4c2b-a966-452b33caadf1
 # ╠═00ebdd2d-d7a6-444a-a548-285b228af912
 # ╠═7a57a2d1-1599-47c1-95b3-bff09c431ae6
@@ -257,6 +299,13 @@ swimming_hmms = Dict(T => swimming_train_hmm(T) for T = behaviour_free_swimming_
 # ╠═a6ff3c4e-f9d5-416b-84e8-f02ccda113dd
 # ╠═787ca473-b238-499f-a3b2-317680341b3d
 # ╠═1d8a6197-f25c-4c4f-aea7-87f261bf892a
+# ╠═ae32a09d-4b39-456a-9b17-b72b14da2457
+# ╠═2ade4518-1ef4-4f59-a8c8-a90531ee421e
+# ╠═2b0d13b1-cff1-4183-ad08-79c83e9cc2a5
+# ╠═ebcfb5a4-2aa7-477c-a911-15cf60c6a35e
+# ╠═ff056014-160a-4228-9a1e-bfb0c85653e9
+# ╠═582c74a3-0ec8-4706-99dd-410fa0bd2a5a
+# ╠═f394a010-23ae-43fb-8cab-c0b9228c37cd
 # ╠═d9b31996-0b41-407e-b017-f41a662f4bf8
 # ╠═d123ee64-6d14-4d16-9336-a24c0327530c
 # ╠═1e539f83-4dd0-4ff3-a71f-471e4cfb2c1e
@@ -267,5 +316,6 @@ swimming_hmms = Dict(T => swimming_train_hmm(T) for T = behaviour_free_swimming_
 # ╠═01115683-f37c-4b04-b233-9b91d9c0251f
 # ╠═daf9a4f4-4ef2-4f65-b27b-2e88956133c5
 # ╠═de11c784-09f3-4628-aa9a-aed4109aa20f
+# ╠═08556ff5-d2c9-4320-8f69-bec233e5cd56
 # ╠═5a16b436-ec76-461c-92a1-9176f534d7bc
 # ╠═ee54b5fa-3d29-4b4d-8ade-7d1b18c5f01b

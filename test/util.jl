@@ -46,6 +46,7 @@ end
     reps = find_repeats(seq)
     @test reduce(vcat, reps) == 1:length(seq)
     for r = reps
+        @test allequal(seq[r])
         @test all(==(seq[first(r)]), seq[r])
         if first(r) > 1
             @test seq[first(r) - 1] ≠ seq[first(r)]
