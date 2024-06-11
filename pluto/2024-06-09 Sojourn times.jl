@@ -246,62 +246,55 @@ swimming_transition_matrices = Dict(
 	temperature => swimming_hmms[temperature].hmm.transition_matrix for temperature = behaviour_free_swimming_temperatures()
 )
 
+# ╔═╡ 1ddca540-72db-43d2-bd80-3c64699029f2
+[artr_transition_matrices[18]; artr_transition_matrices[22]]
+
 # ╔═╡ cc268bdd-6c1b-4455-bcf9-7856e100a307
 let fig = Makie.Figure()
-	ax = Makie.Axis(fig[1,1], xlabel="ARTR", ylabel="Swim", width=400, height=400)
 	colors = [:blue, :teal, :green, :orange, :red]
 
-	corspearman(vec(artr_transition_matrices[T]), vec(swimming_transition_matrices[T]))
+	ax = Makie.Axis(fig[1,1], xlabel="ARTR", ylabel="Swim", width=400, height=400)
+
+	all_swim_trans = Float64[]
+	all_artr_trans = Float64[]
 	
-	for (i, T) = enumerate(artr_wolf_2023_temperatures())		
-		Makie.scatter!(ax, vec(artr_transition_matrices[T]), vec(swimming_transition_matrices[T]), color=colors[i])
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())
+		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)
+		artr_trans = mean(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix for fish = artr_wolf_2023_fishes(T))
+
+		append!(all_swim_trans, vec(swim_trans))
+		append!(all_artr_trans, vec(artr_trans))
+		
+		Makie.scatter!(ax, vec(artr_trans), vec(swim_trans), color=colors[i])
 	end
 	Makie.xlims!(ax, 0, 1)
 	Makie.ylims!(ax, 0, 1)
+	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
+
 
 	ax = Makie.Axis(fig[1,2], xlabel="ARTR (scaled)", ylabel="Swim", width=400, height=400)
+
+	all_swim_trans = Float64[]
+	all_artr_trans = Float64[]
+
 	for (i, T) = enumerate(artr_wolf_2023_temperatures())
 		λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
 		
-		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)^(1/λ)
-		artr_trans = mean([float(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix) for fish = artr_wolf_2023_fishes(T)])
+		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)
+		artr_trans = mean([float(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix)^(1/λ) for fish = artr_wolf_2023_fishes(T)])
+
+		append!(all_swim_trans, vec(real(swim_trans)))
+		append!(all_artr_trans, vec(real(artr_trans)))
 
 		Makie.scatter!(ax, vec(real(artr_trans)), vec(real(swim_trans)), color=colors[i])
 	end
 	Makie.xlims!(ax, 0, 1)
 	Makie.ylims!(ax, 0, 1)
+	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
 
 	Makie.resize_to_layout!(fig)
 	fig
 end
-
-# ╔═╡ e4f1c1dc-8bfd-4949-b83e-168f7667face
-let fig = Makie.Figure()
-	for (i, T) = enumerate(artr_wolf_2023_temperatures())
-		λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
-
-
-		# times are multiplied by λ, thus rates are multiplied by 1/λ
-		
-		ax = Makie.Axis(fig[1,i], title="Temp. $T", xlabel="ARTR (scaled)", ylabel="Swim", width=200, height=200)
-		Makie.scatter!(ax, vec(artr_transition_matrices[T]) / λ, vec(swimming_transition_matrices[T]))
-		Makie.xlims!(ax, 0, 1)
-		Makie.ylims!(ax, 0, 1)
-	end
-	Makie.resize_to_layout!(fig)
-	fig
-end
-
-# ╔═╡ 09b4133a-5b3a-48e3-96b7-fbd50e105cdb
-for t = artr_wolf_2023_temperatures()
-	artr_transition_matrices[t] ./ swimming_transition_matrices[t]
-end
-
-# ╔═╡ a8a8c8aa-3def-4b5c-a7c4-cbb09f0d63ad
-artr_wolf_2023_temperatures()
-
-# ╔═╡ 69fdd3fd-90f8-4887-923d-8a30394fa907
-behaviour_free_swimming_temperatures()
 
 # ╔═╡ Cell order:
 # ╠═ae9a7803-3ddf-4fcc-9b15-6b970797b4cb
@@ -348,8 +341,5 @@ behaviour_free_swimming_temperatures()
 # ╠═9e0f76ea-a3da-46f9-9bc2-7fa79b2e8b60
 # ╠═9a9c5dee-ac20-4828-a6ac-586a5fec69cf
 # ╠═258bac77-b65d-49c4-9c1a-bd397ad7ed6a
+# ╠═1ddca540-72db-43d2-bd80-3c64699029f2
 # ╠═cc268bdd-6c1b-4455-bcf9-7856e100a307
-# ╠═e4f1c1dc-8bfd-4949-b83e-168f7667face
-# ╠═09b4133a-5b3a-48e3-96b7-fbd50e105cdb
-# ╠═a8a8c8aa-3def-4b5c-a7c4-cbb09f0d63ad
-# ╠═69fdd3fd-90f8-4887-923d-8a30394fa907
