@@ -19,6 +19,13 @@ using ZebrafishHMM2023: load_artr_wolf_2023
 using ZebrafishHMM2023: normalize_transition_matrix
 using ZebrafishHMM2023: viterbi_artr
 
+data = load_artr_wolf_2023(; temperature=18, fish=12)
+
+
+for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(temperature)
+    data = load_artr_wolf_2023(; temperature, fish)
+    println("fish $fish, temperature $temperature, $(first(data.time))")
+end
 
 only(keys(MAT.matread(artr_wolf_2023_distances_file(; temperature=18, fish=14))))
 

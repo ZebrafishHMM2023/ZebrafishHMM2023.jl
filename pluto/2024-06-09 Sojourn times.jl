@@ -13,14 +13,14 @@ using Makie: @L_str
 # ╔═╡ 76c368ee-0aa9-4d8e-b815-d006ec9ae3db
 using DataFrames: DataFrame
 
-# ╔═╡ ae8c1c55-37ef-4a32-b034-ab84e8d94c1e
-using Statistics: std
+# ╔═╡ ba1e4268-63c9-4cc8-b233-c088ecd1117a
+using Statistics: mean
 
 # ╔═╡ f6ce0fe7-d97a-4926-9151-607d12e05b44
 using Statistics: var
 
 # ╔═╡ 6d94d933-8409-47ec-9e42-9bb0816f0d2f
-using Statistics: mean
+using Statistics: std
 
 # ╔═╡ 71ee1b22-360b-44fa-a1d3-d03bdf2b13da
 using Statistics: cov
@@ -162,7 +162,9 @@ function artr_train_hmm(; temperature, fish)
 	times_L = [t[last(r) + 1] - t[first(r)] for r = reps if seq[first(r)] == 2]
 	times_R = [t[last(r) + 1] - t[first(r)] for r = reps if seq[first(r)] == 3]
 
-	return (; hmm, lL, times_F, times_L, times_R)
+	time_unit = mean(diff(data.time))
+
+	return (; hmm, lL, times_F, times_L, times_R, time_unit)
 end
 
 # ╔═╡ c5c12295-e495-480e-899b-22745ad9f4e6
@@ -176,7 +178,7 @@ md"# Comparison of sojourn times"
 
 # ╔═╡ 9b77049b-9c3b-4ed8-838f-df958224763d
 let fig = Makie.Figure()
-	bins = 0:2:40
+	bins = 0:1:40
 	for (i, T) = enumerate(artr_wolf_2023_temperatures())
 		ylabel = i == 1 ? "Forw." : ""
 		ax = Makie.Axis(fig[1,i]; width=200, height=150, yscale=log10, title="Temp. $T", xlabel="Sojourn time (sec.)", ylabel)
@@ -202,7 +204,8 @@ end
 let fig = Makie.Figure()
 	bins = 0:20
 	for (i, T) = enumerate(artr_wolf_2023_temperatures())
-		λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
+		#λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
+		λ = std(swimming_hmms[T].times_F) / std(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
 
 		ylabel = i == 1 ? "Forw." : ""
 		ax = Makie.Axis(fig[1,i]; width=200, height=150, yscale=log10, title="Temp. $T", xlabel="Sojourn time (sec.)", ylabel)
@@ -225,12 +228,70 @@ let fig = Makie.Figure()
 	fig
 end
 
+# ╔═╡ 22f1ad7f-0e60-41c1-8d80-cb401f1002a0
+times_F_swim = [t for T = artr_wolf_2023_temperatures() for t = swimming_hmms[T].times_F]
+
+# ╔═╡ 408298dc-da4a-431e-8c13-581786f6bccb
+times_F_artr = [t for T = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F]
+
+# ╔═╡ cf4cf749-dcb4-4f23-80d3-c4e848ec8230
+times_L_swim = [t for T = artr_wolf_2023_temperatures() for t = swimming_hmms[T].times_L]
+
+# ╔═╡ 232a378f-f300-49e4-ae3f-8f3fc7511ba3
+times_L_artr = [t for T = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_L]
+
+# ╔═╡ e90dc938-34cf-4b1c-9ac5-424c0ba123b9
+times_R_swim = [t for T = artr_wolf_2023_temperatures() for t = swimming_hmms[T].times_R]
+
+# ╔═╡ f73ff171-dedd-4c0c-9ec3-c02143c0f4cd
+times_R_artr = [t for T = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_R]
+
+# ╔═╡ 9716ddea-4ddb-4893-85c7-f318751b1092
+common_λ = std([times_F_artr; times_L_artr; times_R_artr]) / mean([times_F_swim; times_L_swim; times_R_swim])
+#common_λ = 5
+
+# ╔═╡ 9697aea0-0501-48ce-8a85-5e488395fa11
+common_λ / 0.2
+
+# ╔═╡ 3100cdac-66cc-4407-bb4b-698344d33986
+let fig = Makie.Figure()
+	bins = 0:50
+
+	ax = Makie.Axis(fig[1,1]; width=250, height=200, yscale=log10, title="Forw.", xlabel="Sojourn time (sec.)", ylabel="Frequency")
+	Makie.stephist!(ax, times_F_swim * common_λ; bins, normalization=:pdf, label="Swim")
+	Makie.stephist!(ax, times_F_artr; bins, normalization=:pdf, label="ARTR")
+	Makie.ylims!(ax, 1e-4, 2)
+
+	ax = Makie.Axis(fig[1,2]; width=250, height=200, yscale=log10, title="Left", xlabel="Sojourn time (sec.)", ylabel="Frequency")
+	Makie.stephist!(ax, times_L_swim * common_λ; bins, normalization=:pdf, label="Swim")
+	Makie.stephist!(ax, times_L_artr; bins, normalization=:pdf, label="ARTR")
+	Makie.ylims!(ax, 1e-4, 2)
+
+	ax = Makie.Axis(fig[1,3]; width=250, height=200, yscale=log10, title="Right", xlabel="Sojourn time (sec.)", ylabel="Frequency")
+	Makie.stephist!(ax, times_R_swim * common_λ; bins, normalization=:pdf, label="Swim")
+	Makie.stephist!(ax, times_R_artr; bins, normalization=:pdf, label="ARTR")
+	Makie.axislegend(ax)
+	Makie.ylims!(ax, 1e-4, 2)
+
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
 # ╔═╡ 9e0f76ea-a3da-46f9-9bc2-7fa79b2e8b60
 let fig = Makie.Figure()
-	scaling_factors = [mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F) for T = artr_wolf_2023_temperatures()]
+	scaling_factors = [
+		mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F) / mean(swimming_hmms[T].times_F)
+		for T = artr_wolf_2023_temperatures()
+	]
+	scaling_factors_std = [
+		std(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F) / std(swimming_hmms[T].times_F)
+		for T = artr_wolf_2023_temperatures()
+	]
 
-	ax = Makie.Axis(fig[1,1]; width=400, height=300, xlabel="Temperature", ylabel="Scaling factor (Swim / ARTR)", xticks=collect(artr_wolf_2023_temperatures()))	
-	Makie.scatterlines!(ax, collect(artr_wolf_2023_temperatures()), scaling_factors)
+	ax = Makie.Axis(fig[1,1]; width=400, height=300, xlabel="Temperature", ylabel="Scaling factor (ARTR / Swim)", xticks=collect(artr_wolf_2023_temperatures()))	
+	Makie.scatterlines!(ax, collect(artr_wolf_2023_temperatures()), scaling_factors, label="mean")
+	Makie.scatterlines!(ax, collect(artr_wolf_2023_temperatures()), scaling_factors_std, label="std")
+	Makie.axislegend(ax)
 	
 	Makie.resize_to_layout!(fig)
 	fig
@@ -272,24 +333,46 @@ let fig = Makie.Figure()
 	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
 
 
-	ax = Makie.Axis(fig[1,2], xlabel="ARTR (scaled)", ylabel="Swim", width=400, height=400)
+	ax = Makie.Axis(fig[1,2], xlabel="ARTR (one scale per temp.)", ylabel="Swim", width=400, height=400)
 
 	all_swim_trans = Float64[]
 	all_artr_trans = Float64[]
 
 	for (i, T) = enumerate(artr_wolf_2023_temperatures())
-		λ = mean(swimming_hmms[T].times_F) / mean(t for fish = artr_wolf_2023_fishes(T) for t = artr_hmms[(; temperature=T, fish)].times_F)
+		my_λ = (
+			std(t for fish = artr_wolf_2023_fishes(T) for t = [artr_hmms[(; temperature=T, fish)].times_F; artr_hmms[(; temperature=T, fish)].times_L; artr_hmms[(; temperature=T, fish)].times_R]) /
+			std([swimming_hmms[T].times_F; swimming_hmms[T].times_L; swimming_hmms[T].times_R])
+		)
 		
 		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)
-		artr_trans = mean([float(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix)^(1/λ) for fish = artr_wolf_2023_fishes(T)])
+		artr_trans = mean([float(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix)^(my_λ / artr_hmms[(; temperature=T, fish)].time_unit) for fish = artr_wolf_2023_fishes(T)])
 
 		append!(all_swim_trans, vec(real(swim_trans)))
 		append!(all_artr_trans, vec(real(artr_trans)))
 
+		Makie.lines!(ax, [0,1], [0,1], color=:gray)
 		Makie.scatter!(ax, vec(real(artr_trans)), vec(real(swim_trans)), color=colors[i])
 	end
 	Makie.xlims!(ax, 0, 1)
 	Makie.ylims!(ax, 0, 1)
+	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
+
+	all_swim_trans = Float64[]
+	all_artr_trans = Float64[]
+
+	ax = Makie.Axis(fig[1,3], xlabel="ARTR (one scale for all temp.)", ylabel="Swim", width=400, height=400)
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())		
+		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)
+		artr_trans = mean([
+			float(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix)^(common_λ / artr_hmms[(; temperature=T, fish)].time_unit) for fish = artr_wolf_2023_fishes(T)
+		])
+
+		append!(all_swim_trans, vec(real(swim_trans)))
+		append!(all_artr_trans, vec(real(artr_trans)))
+
+		Makie.lines!(ax, [0,1], [0,1], color=:gray)
+		Makie.scatter!(ax, vec(real(artr_trans)), vec(real(swim_trans)), color=colors[i])
+	end
 	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
 
 	Makie.resize_to_layout!(fig)
@@ -304,7 +387,7 @@ end
 # ╠═5d9d1329-8faf-46f6-aac3-aee7bd9b8065
 # ╠═2bcdddad-4227-4c56-b452-cff43bec2d41
 # ╠═76c368ee-0aa9-4d8e-b815-d006ec9ae3db
-# ╠═ae8c1c55-37ef-4a32-b034-ab84e8d94c1e
+# ╠═ba1e4268-63c9-4cc8-b233-c088ecd1117a
 # ╠═f6ce0fe7-d97a-4926-9151-607d12e05b44
 # ╠═6d94d933-8409-47ec-9e42-9bb0816f0d2f
 # ╠═71ee1b22-360b-44fa-a1d3-d03bdf2b13da
@@ -338,6 +421,15 @@ end
 # ╠═aa26f84c-49d3-4f14-bc32-e3c3858f4b39
 # ╠═9b77049b-9c3b-4ed8-838f-df958224763d
 # ╠═cc947aef-3e96-4d66-a374-209330b25f77
+# ╠═22f1ad7f-0e60-41c1-8d80-cb401f1002a0
+# ╠═408298dc-da4a-431e-8c13-581786f6bccb
+# ╠═cf4cf749-dcb4-4f23-80d3-c4e848ec8230
+# ╠═232a378f-f300-49e4-ae3f-8f3fc7511ba3
+# ╠═e90dc938-34cf-4b1c-9ac5-424c0ba123b9
+# ╠═f73ff171-dedd-4c0c-9ec3-c02143c0f4cd
+# ╠═9716ddea-4ddb-4893-85c7-f318751b1092
+# ╠═9697aea0-0501-48ce-8a85-5e488395fa11
+# ╠═3100cdac-66cc-4407-bb4b-698344d33986
 # ╠═9e0f76ea-a3da-46f9-9bc2-7fa79b2e8b60
 # ╠═9a9c5dee-ac20-4828-a6ac-586a5fec69cf
 # ╠═258bac77-b65d-49c4-9c1a-bd397ad7ed6a
