@@ -100,6 +100,9 @@ import Makie
 # ╔═╡ 5d9d1329-8faf-46f6-aac3-aee7bd9b8065
 import CairoMakie
 
+# ╔═╡ 17926ffb-8b9d-4d55-9bc6-12d1e564c530
+import HDF5
+
 # ╔═╡ 010bfb30-d9d0-4b23-ae9b-063c7f798cc9
 md"# Swimming sojourn times"
 
@@ -172,6 +175,27 @@ artr_hmms = Dict(
 	(; temperature, fish) => artr_train_hmm(; temperature, fish)
 	for temperature = artr_wolf_2023_temperatures() for fish = artr_wolf_2023_fishes(temperature)
 )
+
+# ╔═╡ 314fc183-f07c-44b1-a93c-4bd761246ef1
+md"# Save HMMs for Matteo"
+
+# ╔═╡ b4430725-a9aa-45fa-a806-506074619c9a
+for temperature = artr_wolf_2023_temperatures(), fish = artr_wolf_2023_fishes(temperature)
+	path = "/data/cossio/projects/2023/zebrafish_hmm/data/20240620_ARTR_HMMs_for_Matteo/artr_temperature=$temperature-fish=$fish.hdf5"
+	HDF5.h5open(path, "w") do h5
+		d = artr_hmms[(; temperature, fish)]
+		write(h5, "type", "HMM_ARTR_Log")
+		write(h5, "transition_matrix", float(d.hmm.transition_matrix))
+		write(h5, "h", float(d.hmm.h))
+		write(h5, "pinit", float(d.hmm.pinit))
+		write(h5, "pseudocount", [d.hmm.pseudocount])
+
+		write(h5, "sojourn_times_F", d.times_F)
+		write(h5, "sojourn_times_L", d.times_L)
+		write(h5, "sojourn_times_R", d.times_R)
+		write(h5, "time_unit", d.time_unit)
+	end
+end
 
 # ╔═╡ aa26f84c-49d3-4f14-bc32-e3c3858f4b39
 md"# Comparison of sojourn times"
@@ -385,6 +409,7 @@ end
 # ╠═4285c8bf-7a44-4c56-a86e-f15dafd67b4b
 # ╠═d3731804-a255-42a7-bad2-31c834be5d7a
 # ╠═5d9d1329-8faf-46f6-aac3-aee7bd9b8065
+# ╠═17926ffb-8b9d-4d55-9bc6-12d1e564c530
 # ╠═2bcdddad-4227-4c56-b452-cff43bec2d41
 # ╠═76c368ee-0aa9-4d8e-b815-d006ec9ae3db
 # ╠═ba1e4268-63c9-4cc8-b233-c088ecd1117a
@@ -418,6 +443,8 @@ end
 # ╠═277b0cb0-a3de-4fc5-8720-9d5e8846e81f
 # ╠═ebefc691-9bf9-4376-a74e-bf56e5ddb065
 # ╠═c5c12295-e495-480e-899b-22745ad9f4e6
+# ╠═314fc183-f07c-44b1-a93c-4bd761246ef1
+# ╠═b4430725-a9aa-45fa-a806-506074619c9a
 # ╠═aa26f84c-49d3-4f14-bc32-e3c3858f4b39
 # ╠═9b77049b-9c3b-4ed8-838f-df958224763d
 # ╠═cc947aef-3e96-4d66-a374-209330b25f77
