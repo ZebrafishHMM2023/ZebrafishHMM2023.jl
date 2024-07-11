@@ -238,12 +238,11 @@ _tmpdir = mktempdir()
 # ╔═╡ c179f81c-fffc-4310-8101-e9d344bc2c82
 for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
 	λ = 2.775
-
 	for rep = 1:100
 		sample = sample_full_behavior_from_artr(; temperature, fish, N=100, λ)
 		CSV.write(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), (; bout_angle = [s.θ for s = sample.obs_seq], bout_time = [s.t for s = sample.obs_seq], bout_dist = [s.d for s = sample.obs_seq], state = sample.state_seq))
 	end
-	break
+	@info "temperature = $temperature, fish = $fish DONE" 
 end
 
 # ╔═╡ cb683418-70ae-4ac3-b74f-a1e4d62c6363
