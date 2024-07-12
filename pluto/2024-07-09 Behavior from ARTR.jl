@@ -145,31 +145,38 @@ rand(HiddenMarkovModels.obs_distribution(behavior_full_hmms[18], 1))
 md"# Sample behavior from ARTR"
 
 # ╔═╡ edd47451-04d6-4fe1-ab6c-61ca175e9e4f
-function sample_behavior_states_from_artr(; temperature::Int, fish::Int, N::Int, λ::Real)
+function sample_behavior_states_from_artr(; temperature::Int, fish::Int, λ::Real)
 	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
 	rescaled_bout_times = all_bout_times * λ / artr_time_unit[(; temperature, fish)]
-	
 	all_states = artr_viterbi_states[(; temperature, fish)]
 
-	selected_indices = filter(≤(length(all_states)), round.(Int, cumsum(rand(rescaled_bout_times, N))))
+	selected_bout_times = Float64[]
+	selected_bout_times_total = 0.0
+	while round(Int, selected_bout_times_total) < length(all_states)
+		t = rand(rescaled_bout_times)
+		push!(selected_bout_times, t)
+		selected_bout_times_total += t
+	end
+	
+	selected_indices = filter(≤(length(all_states)), round.(Int, cumsum(selected_bout_times)))
 
 	return all_states[selected_indices]
 end
 
 # ╔═╡ 51fc8534-b2f4-46fa-85d1-b49d252f2112
-function sample_full_behavior_from_artr(; temperature::Int, fish::Int, N::Int, λ::Real)
-	states = sample_behavior_states_from_artr(; temperature, fish, N, λ)
+function sample_full_behavior_from_artr(; temperature::Int, fish::Int, λ::Real)
+	states = sample_behavior_states_from_artr(; temperature, fish, λ)
 	return (; obs_seq = [rand(HiddenMarkovModels.obs_distribution(behavior_full_hmms[temperature], s)) for s = states], state_seq = states)
 end
 
 # ╔═╡ a690d7e4-106c-40f3-8442-5545b8c50c94
-sample_full_behavior_from_artr(; temperature=26, fish=6, N=200, λ=2.775)
+sample_full_behavior_from_artr(; temperature=26, fish=6, λ=2.775).obs_seq |> length
 
 # ╔═╡ 4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
 let fig = Makie.Figure()
 	for (n, T) = enumerate((18, 26, 33))
 		fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
-	    sample = sample_full_behavior_from_artr(; temperature=T, fish, N=100, λ=2.775)
+	    sample = sample_full_behavior_from_artr(; temperature=T, fish, λ=2.775)
 	    path = ZebrafishHMM2023.to_spatiotemporal_trajectory(sample.obs_seq)
 	
 	    ax = Makie.Axis(fig[1,n], width=200, height=200, title="$T C", xlabel="mm", ylabel="mm")
@@ -194,7 +201,7 @@ let fig = Makie.Figure()
 		#fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
 		fish = fishes[T]
 		
-		samples = [s for _ = 1:100 for s = sample_full_behavior_from_artr(; temperature=T, fish, N=100, λ).obs_seq]
+		samples = [s for _ = 1:100 for s = sample_full_behavior_from_artr(; temperature=T, fish, λ).obs_seq]
 		data = [obs for traj = ZebrafishHMM2023.load_full_obs(T) for obs = traj]
 
 		_bins = -200:200
@@ -221,9 +228,6 @@ let fig = Makie.Figure()
 	fig
 end
 
-# ╔═╡ 384128f2-b63d-43b5-870a-266980a0fa94
-
-
 # ╔═╡ 5c33b44c-ddb0-4017-8eac-b682081afe81
 ZebrafishHMM2023.artr_wolf_2023_fishes(18), ZebrafishHMM2023.artr_wolf_2023_fishes(26), ZebrafishHMM2023.artr_wolf_2023_fishes(33)
 
@@ -239,7 +243,7 @@ _tmpdir = mktempdir()
 for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
 	λ = 2.775
 	for rep = 1:100
-		sample = sample_full_behavior_from_artr(; temperature, fish, N=100, λ)
+		sample = sample_full_behavior_from_artr(; temperature, fish, λ)
 		CSV.write(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), (; bout_angle = [s.θ for s = sample.obs_seq], bout_time = [s.t for s = sample.obs_seq], bout_dist = [s.d for s = sample.obs_seq], state = sample.state_seq))
 	end
 	@info "temperature = $temperature, fish = $fish DONE" 
@@ -288,7 +292,6 @@ end
 # ╠═a690d7e4-106c-40f3-8442-5545b8c50c94
 # ╠═4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
 # ╠═bced5da9-0584-474d-8dd2-4025eb040e67
-# ╠═384128f2-b63d-43b5-870a-266980a0fa94
 # ╠═5c33b44c-ddb0-4017-8eac-b682081afe81
 # ╠═1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
 # ╠═90f17950-5f5f-4406-ae9e-d5d81f28c8b1
