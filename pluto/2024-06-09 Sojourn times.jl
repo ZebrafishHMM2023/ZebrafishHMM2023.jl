@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
@@ -338,7 +338,7 @@ swimming_transition_matrices = Dict(
 let fig = Makie.Figure()
 	colors = [:blue, :teal, :green, :orange, :red]
 
-	ax = Makie.Axis(fig[1,1], xlabel="ARTR", ylabel="Swim", width=400, height=400)
+	ax = Makie.Axis(fig[1,1], xlabel="ARTR", ylabel="Swim", width=300, height=300)
 
 	all_swim_trans = Float64[]
 	all_artr_trans = Float64[]
@@ -357,7 +357,7 @@ let fig = Makie.Figure()
 	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
 
 
-	ax = Makie.Axis(fig[1,2], xlabel="ARTR (one scale per temp.)", ylabel="Swim", width=400, height=400)
+	ax = Makie.Axis(fig[1,2], xlabel="ARTR (one scale per temp.)", ylabel="Swim", width=300, height=300)
 
 	all_swim_trans = Float64[]
 	all_artr_trans = Float64[]
@@ -384,7 +384,7 @@ let fig = Makie.Figure()
 	all_swim_trans = Float64[]
 	all_artr_trans = Float64[]
 
-	ax = Makie.Axis(fig[1,3], xlabel="ARTR (one scale for all temp.)", ylabel="Swim", width=400, height=400)
+	ax = Makie.Axis(fig[1,3], xlabel="ARTR (one scale for all temp.)", ylabel="Swim", width=300, height=300)
 	for (i, T) = enumerate(artr_wolf_2023_temperatures())		
 		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)
 		artr_trans = mean([
@@ -399,6 +399,26 @@ let fig = Makie.Figure()
 	end
 	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
 
+
+	ax = Makie.Axis(fig[1,4], xlabel="ARTR", ylabel="Swim", width=300, height=300)
+
+	all_swim_trans = Float64[]
+	all_artr_trans = Float64[]
+	
+	for (i, T) = enumerate(artr_wolf_2023_temperatures())
+		swim_trans = float(swimming_hmms[T].hmm.transition_matrix)
+		artr_trans = mean(float(artr_hmms[(; temperature=T, fish)].hmm.transition_matrix)^(1/artr_hmms[(; temperature=T, fish)].time_unit) for fish = artr_wolf_2023_fishes(T))
+
+		append!(all_swim_trans, vec(swim_trans))
+		append!(all_artr_trans, vec(artr_trans))
+		
+		Makie.scatter!(ax, vec(artr_trans), vec(swim_trans), color=colors[i])
+	end
+	Makie.xlims!(ax, 0, 1)
+	Makie.ylims!(ax, 0, 1)
+	Makie.text!(ax, 0.1, 0.9; text="Spearman corr. $(round(corspearman(all_swim_trans, all_artr_trans); digits=4))")
+
+	
 	Makie.resize_to_layout!(fig)
 	fig
 end

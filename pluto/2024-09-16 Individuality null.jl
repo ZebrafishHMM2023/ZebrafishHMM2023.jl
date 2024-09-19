@@ -7,6 +7,9 @@ using InteractiveUtils
 # ╔═╡ 66a6d5b1-729f-49ea-8404-9c0ce48d9973
 import Pkg, Revise; Pkg.activate(Base.current_project())
 
+# ╔═╡ 9674b801-5acf-4f76-b494-4aa8cb8ab012
+using Statistics: mean, std
+
 # ╔═╡ dca0d89a-744f-11ef-1dde-71bceb3d228e
 md"# Imports"
 
@@ -50,7 +53,7 @@ glob_all_trajs = [t for fish = trajs for t = fish]
 md"""
 # Train global HMM
 
-HMM trained on ALL trajectories together
+HMM trained on ALL trajectories (of all fish) together.
 """
 
 # ╔═╡ 1737bae3-7527-47c5-81de-c841dd3dacad
@@ -77,53 +80,59 @@ let fig = Makie.Figure()
 	fig
 end
 
+# ╔═╡ 9b385b4f-f087-499d-bce5-650962be31ff
+md"""
+# Train HMM on all trajectories of each fish
+"""
+
+# ╔═╡ 06c159a2-c59e-40fa-b2ba-24d974310299
+begin
+	global_hmms = ZebrafishHMM2023.ZebrafishHMM_G4_Sym[]
+	global_lLs = Vector{Float64}[]
+	for (n, fish) = enumerate(trajs)
+	    println("Fitting fish $n of 18.")
+	    hmm = ZebrafishHMM2023.ZebrafishHMM_G4_Sym(
+	        rand(),
+	        rand(4,4),
+	        1.0,
+	        Distributions.Gamma(0.5, 15.0)
+	    )
+	    ZebrafishHMM2023.normalize_all!(hmm)
+	    (hmm, lL) = HiddenMarkovModels.baum_welch(hmm, fish, length(fish); max_iterations = 5000, check_loglikelihood_increasing = false, atol = ZebrafishHMM2023.ATol(1e-5))
+	    ZebrafishHMM2023.FL_FR_canon!(hmm)
+	    push!(global_hmms, hmm)
+	    push!(global_lLs, lL)
+	end
+end
+
 # ╔═╡ b4cb7f2f-3a52-4371-ba97-a81c00ed6c38
 md"# Chunks"
 
 # ╔═╡ c8fc8255-f68f-4bac-85e2-1fd00615181e
 n_chunks = 10
 
-# ╔═╡ faf3d121-ca0d-4630-8f96-8ac042a961fb
-length(trajs[1])
-
-# ╔═╡ dd6d42aa-9723-4d14-a109-730a29f67210
-for (n, fish) = enumerate(trajs)
-	for (t, chunk) = enumerate(ZebrafishHMM2023.chunks(fish, n_chunks))
-		@show chunk
-		@show length(chunk)
-		break
-	end
-	break
-end
-
 # ╔═╡ 93f887d2-8913-42c4-adf0-d751b9f85eb9
 function train_chunk_hmms(n_chunks::Int; fictitious::Bool = false)
-	chunk_hmms = Vector{Vector{ZebrafishHMM2023.ZebrafishHMM_G4_Sym}}()
+	chunk_hmms = Vector{Vector{ZebrafishHMM2023.ZebrafishHMM_G3_Sym}}()
 	chunk_lLs = Vector{Vector{Vector{Float64}}}()
 	for (n, fish) = enumerate(trajs)
-	    push!(chunk_hmms, ZebrafishHMM2023.ZebrafishHMM_G4_Sym[])
+	    push!(chunk_hmms, ZebrafishHMM2023.ZebrafishHMM_G3_Sym[])
 	    push!(chunk_lLs, Vector{Float64}[])
 	    for (t, chunk) = enumerate(ZebrafishHMM2023.chunks(fish, n_chunks))
 	        println("Fitting fish $n of 18, chunk $t (of length $(length(chunk))).")
-	        hmm = ZebrafishHMM2023.ZebrafishHMM_G4_Sym(
-	            rand(),
-	            rand(4,4),
-	            1.0,
-	            Distributions.Gamma(0.5, 15.0)
-	        )
-	        ZebrafishHMM2023.normalize_all!(hmm)
+			hmm = ZebrafishHMM2023.normalize_all!(ZebrafishHMM2023.ZebrafishHMM_G3_Sym(rand(), rand(3,3), 1.0, Distributions.Gamma(1.5, 20.0), 1.0))
 
-			# if fictitious
-			# 	my_data = ...
-			# else
-			# 	my_data = chunk
-			# end
+			if fictitious
+				# use same global HMM for all fish ... null model for lack of individuality
+				my_data = [rand(glob_hmm, length(seq)).obs_seq for seq = chunk]
+			else
+				my_data = chunk
+			end
 
-			my_data = chunk
-			@show length(my_data)
+			# my_data = chunk
+			# @show length(my_data)
 			
 	        (hmm, lL) = HiddenMarkovModels.baum_welch(hmm, my_data, length(my_data); max_iterations = 5000, check_loglikelihood_increasing = false, atol = ZebrafishHMM2023.ATol(1e-5))
-	        ZebrafishHMM2023.FL_FR_canon!(hmm)
 	        push!(chunk_hmms[n], hmm)
 	        push!(chunk_lLs[n], lL)
 	    end
@@ -132,13 +141,71 @@ function train_chunk_hmms(n_chunks::Int; fictitious::Bool = false)
 end
 
 # ╔═╡ 159663b0-a16a-4653-9d7e-6bae6ea3aabf
-chunk_hmms, chunk_lLs = train_chunk_hmms(n_chunks)
-
-# ╔═╡ 29849ffc-c262-4325-b918-acb52a6bbc0a
-[t for fish = trajs for t = fish]
+chunk_hmms, chunk_lLs = train_chunk_hmms(n_chunks; fictitious=true)
 
 # ╔═╡ 791b67c2-e826-47e4-9bcb-bbe3f736094c
-glob_hmm
+let fig = Makie.Figure()
+	_opts = (; width=200, height=200, xlabel="global HMM", ylabel="<chunk HMMs>")
+
+	ax = Makie.Axis(fig[1,1]; _opts..., title="std(forw)")
+	Makie.errorbars!(ax, [hmm.σforw for hmm = global_hmms],
+	    [mean(hmm.σforw for hmm = fish) for fish = chunk_hmms],
+	    [std(hmm.σforw for hmm = fish) for fish = chunk_hmms] / 2,
+	)
+	Makie.scatter!(ax, [hmm.σforw for hmm = global_hmms], [mean(hmm.σforw for hmm = fish) for fish = chunk_hmms])
+	Makie.ylims!(ax, 1, 7)
+	
+	ax = Makie.Axis(fig[1,2]; _opts..., title="mean(turn)")
+	Makie.errorbars!(ax, [mean(hmm.turn) for hmm = global_hmms], 
+	    [mean(mean(hmm.turn) for hmm = fish) for fish = chunk_hmms],
+	    [std(mean(hmm.turn) for hmm = fish) for fish = chunk_hmms] / 2,
+	)
+	Makie.scatter!(ax, [mean(hmm.turn) for hmm = global_hmms], [mean(mean(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms])
+	Makie.ylims!(ax, 20, 45)
+	
+	ax = Makie.Axis(fig[1,3]; _opts..., title="std(turn)")
+	Makie.errorbars!(ax, [std(hmm.turn) for hmm = global_hmms], 
+	    [mean(std(hmm.turn) for hmm = fish) for fish = chunk_hmms],
+	    [std(std(hmm.turn) for hmm = fish) for fish = chunk_hmms] / 2,
+	)
+	Makie.scatter!(ax, [std(hmm.turn) for hmm = global_hmms], [mean(std(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms])
+	Makie.ylims!(ax, 13, 28)
+	
+	ax = Makie.Axis(fig[2,1]; _opts..., title="F->F")
+	Makie.errorbars!(ax, [hmm.transition_matrix[1,1] for hmm = global_hmms], 
+	    [mean(hmm.transition_matrix[1,1] for hmm = fish) for fish = chunk_hmms],
+	    [std(hmm.transition_matrix[1,1] for hmm = fish) for fish = chunk_hmms] / 2,
+	)
+	Makie.scatter!(ax, [hmm.transition_matrix[1,1] for hmm = global_hmms], [mean(hmm.transition_matrix[1,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms])
+	Makie.ylims!(ax, 0, 0.7)
+	
+	ax = Makie.Axis(fig[2,2]; _opts..., title="F->L, F->R")
+	Makie.errorbars!(ax, [hmm.transition_matrix[1,2] for hmm = global_hmms], 
+	    [mean(hmm.transition_matrix[1,2] for hmm = fish) for fish = chunk_hmms],
+	    [std(hmm.transition_matrix[1,2] for hmm = fish) for fish = chunk_hmms] / 2,
+	)
+	Makie.scatter!(ax, [hmm.transition_matrix[1,2] for hmm = global_hmms], [mean(hmm.transition_matrix[1,2] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms])
+	Makie.ylims!(ax, 0.2, 0.5)
+	
+	ax = Makie.Axis(fig[2,3]; _opts..., title="L->L, R->R")
+	Makie.errorbars!(ax, [hmm.transition_matrix[3,3] for hmm = global_hmms], 
+	    [mean(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms],
+	    [std(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms] / 2,
+	)
+	Makie.scatter!(ax, [hmm.transition_matrix[3,3] for hmm = global_hmms], [mean(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms])
+	Makie.ylims!(ax, 0.1, 0.6)
+	
+	ax = Makie.Axis(fig[2,4]; _opts..., title="L->F, R->F")
+	Makie.errorbars!(ax, [hmm.transition_matrix[3,1] for hmm = global_hmms], 
+	    [mean(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms],
+	    [std(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms] / 2,
+	)
+	Makie.scatter!(ax, [hmm.transition_matrix[3,1] for hmm = global_hmms], [mean(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms])
+	Makie.ylims!(ax, 0.2, 0.7)
+	
+	Makie.resize_to_layout!(fig)
+	fig
+end
 
 # ╔═╡ Cell order:
 # ╠═dca0d89a-744f-11ef-1dde-71bceb3d228e
@@ -151,6 +218,7 @@ glob_hmm
 # ╠═0f94e06d-c8bf-4204-a5a3-3e67d5374a99
 # ╠═13917bd0-67fc-4454-84b1-4f5ff6004b0f
 # ╠═8ab55b4d-5ea8-4e12-959e-21301d76770a
+# ╠═9674b801-5acf-4f76-b494-4aa8cb8ab012
 # ╠═89f60f4e-be24-4531-b80a-7789bbf26aeb
 # ╠═56a17d8b-d9d0-4c3d-bd9f-97ac614074d9
 # ╠═19aed50e-284d-42d3-ad8c-8aa382bb6e76
@@ -159,11 +227,10 @@ glob_hmm
 # ╠═1737bae3-7527-47c5-81de-c841dd3dacad
 # ╠═0244c15e-1d24-4b40-adb6-f71c3466f65d
 # ╠═b45a1679-4967-4ce0-88e5-d9e40eee0fa2
+# ╠═9b385b4f-f087-499d-bce5-650962be31ff
+# ╠═06c159a2-c59e-40fa-b2ba-24d974310299
 # ╠═b4cb7f2f-3a52-4371-ba97-a81c00ed6c38
 # ╠═c8fc8255-f68f-4bac-85e2-1fd00615181e
-# ╠═faf3d121-ca0d-4630-8f96-8ac042a961fb
-# ╠═dd6d42aa-9723-4d14-a109-730a29f67210
 # ╠═93f887d2-8913-42c4-adf0-d751b9f85eb9
 # ╠═159663b0-a16a-4653-9d7e-6bae6ea3aabf
-# ╠═29849ffc-c262-4325-b918-acb52a6bbc0a
 # ╠═791b67c2-e826-47e4-9bcb-bbe3f736094c
