@@ -83,8 +83,8 @@ for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures(), fish = Zebrafi
 end
 
 # ╔═╡ 3b6b3cc3-d29f-469b-ad3a-e0cc50017b02
-artr_time_unit = Dict((; temperature, fish) =>
-	mean(diff(artr_data[(; temperature=26, fish=6)].time))
+artr_time_unit = Dict(
+	(; temperature, fish) => mean(diff(artr_data[(; temperature=26, fish=6)].time))
 	for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures()
 	for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
 )
@@ -149,6 +149,7 @@ function sample_behavior_states_from_artr(; temperature::Int, fish::Int, λ::Rea
 	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
 	time_scaling_factor = λ / artr_time_unit[(; temperature, fish)]
 	rescaled_bout_times = all_bout_times * time_scaling_factor
+	
 	all_states = artr_viterbi_states[(; temperature, fish)]
 
 	selected_bout_times = Float64[]
@@ -164,47 +165,71 @@ function sample_behavior_states_from_artr(; temperature::Int, fish::Int, λ::Rea
 	return all_states[selected_indices], selected_bout_times[1:length(selected_indices)] / time_scaling_factor
 end
 
+# ╔═╡ 51d4b383-4afc-4827-a253-5fbcb8b56e16
+function sample_behavior_states_from_artr_v2(; temperature::Int, fish::Int, λ::Real)
+	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
+
+	artr_states = artr_viterbi_states[(; temperature, fish)]
+	artr_recording_duration = length(artr_states) * artr_time_unit[(; temperature, fish)]
+	artr_recording_times = (1:length(artr_states)) .* artr_time_unit[(; temperature, fish)]
+
+	selected_times = Float64[]
+	selected_times_total = 0.0
+	while true
+		Δt = rand(all_bout_times)
+		if (selected_times_total + Δt) * λ < artr_recording_duration
+			selected_times_total += Δt
+			push!(selected_times, Δt)
+		else
+			break
+		end
+	end
+	@assert selected_times_total * λ < artr_recording_duration
+
+	#selected_indices = [argmin(abs.(t * λ .- artr_recording_times)) for t = cumsum(selected_times)]
+	selected_indices = [findfirst(artr_recording_times .- t * λ .≥ 0) for t = cumsum(selected_times)]
+	return artr_states[selected_indices], selected_times
+end
+
 # ╔═╡ 51fc8534-b2f4-46fa-85d1-b49d252f2112
 function sample_full_behavior_from_artr(; temperature::Int, fish::Int, λ::Real)
-	states, times = sample_behavior_states_from_artr(; temperature, fish, λ)
+	states, times = sample_behavior_states_from_artr_v2(; temperature, fish, λ)
 	return (; obs_seq = [rand(HiddenMarkovModels.obs_distribution(behavior_full_hmms[temperature], s)) for s = states], state_seq = states, times)
 end
 
 # ╔═╡ 2291f23b-b69f-4a37-9c51-945c1d0de050
 function sample_full_behavior_from_artr_times_corrected(; temperature::Int, fish::Int, λ::Real)
 	samples_0 = sample_full_behavior_from_artr(; temperature, fish, λ)
+	@assert length(samples_0.obs_seq) == length(samples_0.times) == length(samples_0.state_seq)
 	obs_seq = [ZebrafishHMM2023.ZebrafishHMM_G3_Sym_Full_Obs(s.θ, s.d, t) for (s, t) = zip(samples_0.obs_seq, samples_0.times)]
 	return (; obs_seq, samples_0.state_seq)
 end
 
-# ╔═╡ 4a5ba1bf-03d5-4af9-919c-116568df40d2
-sample_full_behavior_from_artr(; temperature=26, fish=13, λ=2.6).obs_seq
+# ╔═╡ 43460cb3-8424-4cf1-91f1-92ebcf0663b3
+my_sample, my_times = sample_behavior_states_from_artr_v2(; temperature=22, fish=11, λ=1/0.44)
 
-# ╔═╡ 851171f1-1844-4a77-b224-8de6f3fa34ed
-sample_full_behavior_from_artr_times_corrected(; temperature=26, fish=13, λ=2.6).obs_seq
+# ╔═╡ 1bc78df8-d7e4-4317-861e-22b549f670e4
+sum(my_times)
 
-# ╔═╡ 8112c24a-b669-4f98-b8cc-1f91a12d04d4
-2.775 / artr_time_unit[(; temperature=26, fish=6)]
+# ╔═╡ 44c00685-f2ca-4be9-a243-120a468f6c01
+sum(my_times) / 60 / 0.44
 
-# ╔═╡ 46d15f3a-6ccf-4a80-968f-b3ba1cff7a78
-1/0.44
+# ╔═╡ a7fec4e8-b123-4697-894e-f04d621b5101
+length(artr_viterbi_states[(; temperature=22, fish=11)]) * artr_time_unit[(; temperature=22, fish=11)] * 0.44
 
-# ╔═╡ 47de7516-45da-4691-b3a3-995c78e84bed
-1/2.775
+# ╔═╡ 780413d4-9e98-40f7-a633-b576e8d34bf8
+length(artr_viterbi_states[(; temperature=22, fish=11)]) * artr_time_unit[(; temperature=22, fish=11)] / 60
 
-# ╔═╡ e8d74cf4-6fdb-4c36-83cc-9b08fb69b799
-artr_time_unit[(; temperature=26, fish=6)]
-
-# ╔═╡ a690d7e4-106c-40f3-8442-5545b8c50c94
-sample_full_behavior_from_artr(; temperature=26, fish=6, λ=1/0.44).obs_seq |> length
+# ╔═╡ 224f6bae-b08f-45f0-b500-8202c2ad4e64
+artr_time_unit[(; temperature=18, fish=13)]
 
 # ╔═╡ 4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
 let fig = Makie.Figure()
 	for (n, T) = enumerate((18, 26, 33))
 		fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
-	    sample = sample_full_behavior_from_artr(; temperature=T, fish, λ=2.775)
+	    sample = sample_full_behavior_from_artr(; temperature=T, fish, λ=1/0.44)
 	    path = ZebrafishHMM2023.to_spatiotemporal_trajectory(sample.obs_seq)
-		path[:, 3] .= sample.times
+		#path[:, 3] .= times
 		
 	    ax = Makie.Axis(fig[1,n], width=200, height=200, title="$T C", xlabel="mm", ylabel="mm")
 	    Makie.scatterlines!(ax, path[:, 1:2], markercolor=(sample.state_seq .== 1), markersize=3)
@@ -220,7 +245,7 @@ let fig = Makie.Figure()
 	_sz = 100
 	_lw = 2
 
-	λ = 2.775
+	λ = 1 / 0.44
 
 	fishes = Dict(18 => 14, 26 => 7, 33 => 17)
 
@@ -255,9 +280,6 @@ let fig = Makie.Figure()
 	fig
 end
 
-# ╔═╡ 5c33b44c-ddb0-4017-8eac-b682081afe81
-ZebrafishHMM2023.artr_wolf_2023_fishes(18), ZebrafishHMM2023.artr_wolf_2023_fishes(26), ZebrafishHMM2023.artr_wolf_2023_fishes(33)
-
 # ╔═╡ 1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
 md"""
 # Save data for Matteo
@@ -268,13 +290,14 @@ _tmpdir = mktempdir()
 
 # ╔═╡ c179f81c-fffc-4310-8101-e9d344bc2c82
 for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
-	λ = 2.775
+	#λ = 2.775
+	λ = 1 / 0.44
 	for rep = 1:100
 		sample = sample_full_behavior_from_artr_times_corrected(; temperature, fish, λ)
 		CSV.write(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), (; bout_angle = [s.θ for s = sample.obs_seq], bout_time = [s.t for s = sample.obs_seq], bout_dist = [s.d for s = sample.obs_seq], state = sample.state_seq))
 		#CSV.write(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), (; bout_angle = [s.θ for s = sample.obs_seq], bout_time = sample.times, bout_dist = [s.d for s = sample.obs_seq], state = sample.state_seq))
 	end
-	@info "temperature = $temperature, fish = $fish DONE" 
+	@info "temperature = $temperature, fish = $fish DONE"
 end
 
 # ╔═╡ cb683418-70ae-4ac3-b74f-a1e4d62c6363
@@ -316,18 +339,17 @@ end
 # ╠═354ff007-f224-4352-95c0-1826c027759f
 # ╠═369d6c55-4239-4eeb-b23b-4c3910d791fd
 # ╠═edd47451-04d6-4fe1-ab6c-61ca175e9e4f
+# ╠═51d4b383-4afc-4827-a253-5fbcb8b56e16
 # ╠═51fc8534-b2f4-46fa-85d1-b49d252f2112
 # ╠═2291f23b-b69f-4a37-9c51-945c1d0de050
-# ╠═4a5ba1bf-03d5-4af9-919c-116568df40d2
-# ╠═851171f1-1844-4a77-b224-8de6f3fa34ed
-# ╠═8112c24a-b669-4f98-b8cc-1f91a12d04d4
-# ╠═46d15f3a-6ccf-4a80-968f-b3ba1cff7a78
-# ╠═47de7516-45da-4691-b3a3-995c78e84bed
-# ╠═e8d74cf4-6fdb-4c36-83cc-9b08fb69b799
-# ╠═a690d7e4-106c-40f3-8442-5545b8c50c94
+# ╠═43460cb3-8424-4cf1-91f1-92ebcf0663b3
+# ╠═1bc78df8-d7e4-4317-861e-22b549f670e4
+# ╠═44c00685-f2ca-4be9-a243-120a468f6c01
+# ╠═a7fec4e8-b123-4697-894e-f04d621b5101
+# ╠═780413d4-9e98-40f7-a633-b576e8d34bf8
+# ╠═224f6bae-b08f-45f0-b500-8202c2ad4e64
 # ╠═4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
 # ╠═bced5da9-0584-474d-8dd2-4025eb040e67
-# ╠═5c33b44c-ddb0-4017-8eac-b682081afe81
 # ╠═1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
 # ╠═90f17950-5f5f-4406-ae9e-d5d81f28c8b1
 # ╠═c179f81c-fffc-4310-8101-e9d344bc2c82
