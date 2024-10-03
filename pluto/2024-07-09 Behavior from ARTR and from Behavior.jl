@@ -305,7 +305,7 @@ _tmpdir_behavior_only = mktempdir()
 
 # ╔═╡ a41f299b-2df6-4e72-b62c-1765299fc884
 for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures()
-	traj = rand(behavior_full_hmms[temperature], 1000)
+	traj = rand(behavior_full_hmms[temperature], 100_000)
 	CSV.write(joinpath(_tmpdir_behavior_only, "temperature=$temperature.csv"), (; bout_angle = [s.θ for s = traj.obs_seq], bout_time = [s.t for s = traj.obs_seq], bout_dist = [s.d for s = traj.obs_seq], state = traj.state_seq))
 end
 
