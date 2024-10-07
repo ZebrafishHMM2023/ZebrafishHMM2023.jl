@@ -205,8 +205,12 @@ function sample_full_behavior_from_artr_times_corrected(; temperature::Int, fish
 	return (; obs_seq, samples_0.state_seq)
 end
 
+# ╔═╡ 29371878-01c9-4f1e-b472-d224bf3e5504
+#my_λ = 1 / 0.44
+my_λ = 0.44 # try inverted λ
+
 # ╔═╡ 43460cb3-8424-4cf1-91f1-92ebcf0663b3
-my_sample, my_times = sample_behavior_states_from_artr_v2(; temperature=22, fish=11, λ=1/0.44)
+my_sample, my_times = sample_behavior_states_from_artr_v2(; temperature=22, fish=11, λ=my_λ)
 
 # ╔═╡ 1bc78df8-d7e4-4317-861e-22b549f670e4
 sum(my_times)
@@ -215,7 +219,7 @@ sum(my_times)
 sum(my_times) / 60 / 0.44
 
 # ╔═╡ a7fec4e8-b123-4697-894e-f04d621b5101
-length(artr_viterbi_states[(; temperature=22, fish=11)]) * artr_time_unit[(; temperature=22, fish=11)] * 0.44
+length(artr_viterbi_states[(; temperature=22, fish=11)]) * artr_time_unit[(; temperature=22, fish=11)] / my_λ
 
 # ╔═╡ 780413d4-9e98-40f7-a633-b576e8d34bf8
 length(artr_viterbi_states[(; temperature=22, fish=11)]) * artr_time_unit[(; temperature=22, fish=11)] / 60
@@ -227,7 +231,7 @@ artr_time_unit[(; temperature=18, fish=13)]
 let fig = Makie.Figure()
 	for (n, T) = enumerate((18, 26, 33))
 		fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
-	    sample = sample_full_behavior_from_artr(; temperature=T, fish, λ=1/0.44)
+	    sample = sample_full_behavior_from_artr(; temperature=T, fish, λ=my_λ)
 	    path = ZebrafishHMM2023.to_spatiotemporal_trajectory(sample.obs_seq)
 		#path[:, 3] .= times
 		
@@ -245,7 +249,7 @@ let fig = Makie.Figure()
 	_sz = 100
 	_lw = 2
 
-	λ = 1 / 0.44
+	λ = my_λ
 
 	fishes = Dict(18 => 14, 26 => 7, 33 => 17)
 
@@ -281,17 +285,18 @@ let fig = Makie.Figure()
 end
 
 # ╔═╡ 1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
-md"""
-# Save data for Matteo
-"""
+md"# Save data for Matteo (Behavior from Neuro)"
 
 # ╔═╡ 90f17950-5f5f-4406-ae9e-d5d81f28c8b1
 _tmpdir = mktempdir()
 
+# ╔═╡ 3b9353ab-85ea-42a7-837c-cdf313e476b0
+my_λ
+
 # ╔═╡ c179f81c-fffc-4310-8101-e9d344bc2c82
 for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
 	#λ = 2.775
-	λ = 1 / 0.44
+	λ = my_λ
 	for rep = 1:100
 		sample = sample_full_behavior_from_artr_times_corrected(; temperature, fish, λ)
 		CSV.write(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), (; bout_angle = [s.θ for s = sample.obs_seq], bout_time = [s.t for s = sample.obs_seq], bout_dist = [s.d for s = sample.obs_seq], state = sample.state_seq))
@@ -299,6 +304,9 @@ for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures(), fish 
 	end
 	@info "temperature = $temperature, fish = $fish DONE"
 end
+
+# ╔═╡ 8ef03823-98a5-478d-b4ff-fa507b0f2a2d
+md"# Save data for Matteo (Behavior only)"
 
 # ╔═╡ cb683418-70ae-4ac3-b74f-a1e4d62c6363
 _tmpdir_behavior_only = mktempdir()
@@ -342,6 +350,7 @@ end
 # ╠═51d4b383-4afc-4827-a253-5fbcb8b56e16
 # ╠═51fc8534-b2f4-46fa-85d1-b49d252f2112
 # ╠═2291f23b-b69f-4a37-9c51-945c1d0de050
+# ╠═29371878-01c9-4f1e-b472-d224bf3e5504
 # ╠═43460cb3-8424-4cf1-91f1-92ebcf0663b3
 # ╠═1bc78df8-d7e4-4317-861e-22b549f670e4
 # ╠═44c00685-f2ca-4be9-a243-120a468f6c01
@@ -352,6 +361,8 @@ end
 # ╠═bced5da9-0584-474d-8dd2-4025eb040e67
 # ╠═1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
 # ╠═90f17950-5f5f-4406-ae9e-d5d81f28c8b1
+# ╠═3b9353ab-85ea-42a7-837c-cdf313e476b0
 # ╠═c179f81c-fffc-4310-8101-e9d344bc2c82
+# ╠═8ef03823-98a5-478d-b4ff-fa507b0f2a2d
 # ╠═cb683418-70ae-4ac3-b74f-a1e4d62c6363
 # ╠═a41f299b-2df6-4e72-b62c-1765299fc884
