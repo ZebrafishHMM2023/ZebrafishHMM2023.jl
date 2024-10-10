@@ -138,9 +138,6 @@ end
 # ╔═╡ a72cad49-5d10-453b-81c3-af9bb4b0fab7
 behavior_full_hmms = Dict(temperature => train_full_behavior_hmm(bouts_hmms[temperature], temperature) for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures())
 
-# ╔═╡ 354ff007-f224-4352-95c0-1826c027759f
-rand(HiddenMarkovModels.obs_distribution(behavior_full_hmms[18], 1))
-
 # ╔═╡ 369d6c55-4239-4eeb-b23b-4c3910d791fd
 md"# Sample behavior from ARTR"
 
@@ -206,26 +203,8 @@ function sample_full_behavior_from_artr_times_corrected(; temperature::Int, fish
 end
 
 # ╔═╡ 29371878-01c9-4f1e-b472-d224bf3e5504
-#my_λ = 1 / 0.44
-my_λ = 0.44 # try inverted λ
-
-# ╔═╡ 43460cb3-8424-4cf1-91f1-92ebcf0663b3
-my_sample, my_times = sample_behavior_states_from_artr_v2(; temperature=22, fish=11, λ=my_λ)
-
-# ╔═╡ 1bc78df8-d7e4-4317-861e-22b549f670e4
-sum(my_times)
-
-# ╔═╡ 44c00685-f2ca-4be9-a243-120a468f6c01
-sum(my_times) / 60 / 0.44
-
-# ╔═╡ a7fec4e8-b123-4697-894e-f04d621b5101
-length(artr_viterbi_states[(; temperature=22, fish=11)]) * artr_time_unit[(; temperature=22, fish=11)] / my_λ
-
-# ╔═╡ 780413d4-9e98-40f7-a633-b576e8d34bf8
-length(artr_viterbi_states[(; temperature=22, fish=11)]) * artr_time_unit[(; temperature=22, fish=11)] / 60
-
-# ╔═╡ 224f6bae-b08f-45f0-b500-8202c2ad4e64
-artr_time_unit[(; temperature=18, fish=13)]
+my_λ = 1 / 0.44
+#my_λ = 0.44 # try inverted λ
 
 # ╔═╡ 4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
 let fig = Makie.Figure()
@@ -279,6 +258,50 @@ let fig = Makie.Figure()
 	    Makie.ylims!(ax, 1e-4, 1)
 	
 	    n == 3 && Makie.axislegend(ax)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ e25e545e-d41f-4780-8dc4-4b2886b4d15c
+md"# Check transition matrices"
+
+# ╔═╡ c36dd850-2009-40dc-bdce-08cc32bd263a
+ZebrafishHMM2023.artr_wolf_2023_fishes(22)
+
+# ╔═╡ eeebdd6a-49b7-4649-8e32-33bad07a7af4
+
+
+# ╔═╡ 6ac94515-4e81-4eb5-88d7-eb8eb193ac76
+my_my_λ = 1/0.2
+
+# ╔═╡ 79ececc9-607c-4370-accc-b3942e07eedd
+let fig = Makie.Figure()
+	temperature_colors = Dict(18=>"blue", 22=>"cyan", 26=>"green", 30=>"orange", 33=>"red")
+	for (col, _thresh) = enumerate([0, 5000, 7000, 8000, 10000])
+		ax = Makie.Axis(fig[1,col], width=200, height=200)
+		for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures()
+			
+			behavior_T = behavior_full_hmms[temperature].transition_matrix
+	
+			artr_T_scaled_array = Matrix{Float64}[]
+			
+			for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
+				artr_T = float(artr_hmms[(; temperature, fish)].transition_matrix)
+				scaling_power = my_my_λ / artr_time_unit[(; temperature, fish)]
+				artr_T_scaled = artr_T^scaling_power
+	
+				push!(artr_T_scaled_array, artr_T_scaled)
+				
+				if size(ZebrafishHMM2023.load_artr_wolf_2023(; temperature, fish).left, 2) > _thresh
+					Makie.scatter!(ax, vec(behavior_T), vec(artr_T_scaled); color=temperature_colors[temperature], markersize=5)
+				end
+			end
+	
+			#Makie.scatter!(ax, vec(behavior_T), vec(mean(artr_T_scaled_array)); color=(temperature_colors[temperature], 0.5), markersize=20)
+		end
+		Makie.xlims!(ax, -0.1, 1)
+		Makie.ylims!(ax, -0.1, 1)
 	end
 	Makie.resize_to_layout!(fig)
 	fig
@@ -344,21 +367,19 @@ end
 # ╠═0601dac5-cef9-4b2b-83ce-d37064e4d9e1
 # ╠═cbf99327-4e73-43d8-aa64-05555b8ebe99
 # ╠═a72cad49-5d10-453b-81c3-af9bb4b0fab7
-# ╠═354ff007-f224-4352-95c0-1826c027759f
 # ╠═369d6c55-4239-4eeb-b23b-4c3910d791fd
 # ╠═edd47451-04d6-4fe1-ab6c-61ca175e9e4f
 # ╠═51d4b383-4afc-4827-a253-5fbcb8b56e16
 # ╠═51fc8534-b2f4-46fa-85d1-b49d252f2112
 # ╠═2291f23b-b69f-4a37-9c51-945c1d0de050
 # ╠═29371878-01c9-4f1e-b472-d224bf3e5504
-# ╠═43460cb3-8424-4cf1-91f1-92ebcf0663b3
-# ╠═1bc78df8-d7e4-4317-861e-22b549f670e4
-# ╠═44c00685-f2ca-4be9-a243-120a468f6c01
-# ╠═a7fec4e8-b123-4697-894e-f04d621b5101
-# ╠═780413d4-9e98-40f7-a633-b576e8d34bf8
-# ╠═224f6bae-b08f-45f0-b500-8202c2ad4e64
 # ╠═4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
 # ╠═bced5da9-0584-474d-8dd2-4025eb040e67
+# ╠═e25e545e-d41f-4780-8dc4-4b2886b4d15c
+# ╠═79ececc9-607c-4370-accc-b3942e07eedd
+# ╠═c36dd850-2009-40dc-bdce-08cc32bd263a
+# ╠═eeebdd6a-49b7-4649-8e32-33bad07a7af4
+# ╠═6ac94515-4e81-4eb5-88d7-eb8eb193ac76
 # ╠═1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
 # ╠═90f17950-5f5f-4406-ae9e-d5d81f28c8b1
 # ╠═3b9353ab-85ea-42a7-837c-cdf313e476b0
