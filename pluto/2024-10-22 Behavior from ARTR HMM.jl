@@ -74,8 +74,8 @@ artr_viterbi_states = Dict((; temperature, fish) =>
 	for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
 )
 
-# ╔═╡ fd8ef759-e4e2-4a8b-8fa7-bafad992ef7a
-artr_viterbi_states[(; temperature=26, fish=6)]
+# ╔═╡ aa0eda17-4d29-4dbf-b42f-b27eb574c7b5
+rand(artr_hmms[(; temperature=26, fish=6)], 10).state_seq
 
 # ╔═╡ 7ae067c1-8c0c-4f91-b8e1-8c39a32c821a
 for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
@@ -139,15 +139,17 @@ end
 behavior_full_hmms = Dict(temperature => train_full_behavior_hmm(bouts_hmms[temperature], temperature) for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures())
 
 # ╔═╡ 369d6c55-4239-4eeb-b23b-4c3910d791fd
-md"# Sample behavior from ARTR"
+md"# Sample behavior from ARTR HMM (not from ARTR data)"
 
 # ╔═╡ edd47451-04d6-4fe1-ab6c-61ca175e9e4f
 function sample_behavior_states_from_artr(; temperature::Int, fish::Int, λ::Real)
 	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
 	time_scaling_factor = λ / artr_time_unit[(; temperature, fish)]
 	rescaled_bout_times = all_bout_times * time_scaling_factor
-	
-	all_states = artr_viterbi_states[(; temperature, fish)]
+
+	#all_states = artr_viterbi_states[(; temperature, fish)]
+	all_states = rand(artr_hmms[(; temperature, fish)], 100_000).state_seq
+	# instead of using the Viterbi labeled ARTR data, we will use the HMM to sample really long trajectories
 
 	selected_bout_times = Float64[]
 	selected_bout_times_total = 0.0
@@ -163,10 +165,13 @@ function sample_behavior_states_from_artr(; temperature::Int, fish::Int, λ::Rea
 end
 
 # ╔═╡ 51d4b383-4afc-4827-a253-5fbcb8b56e16
-function sample_behavior_states_from_artr_v2(; temperature::Int, fish::Int, λ::Real)
+function sample_behavior_states_from_artr_v2(; temperature::Int, fish::Int, λ::Real, traj_length = 100_000)
 	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
 
-	artr_states = artr_viterbi_states[(; temperature, fish)]
+	# instead of using the Viterbi labeled ARTR data, we will use the HMM to sample really long trajectories
+	#artr_states = artr_viterbi_states[(; temperature, fish)]
+	artr_states = rand(artr_hmms[(; temperature, fish)], traj_length).state_seq
+
 	artr_recording_duration = length(artr_states) * artr_time_unit[(; temperature, fish)]
 	artr_recording_times = (1:length(artr_states)) .* artr_time_unit[(; temperature, fish)]
 
@@ -263,52 +268,11 @@ let fig = Makie.Figure()
 	fig
 end
 
-# ╔═╡ e25e545e-d41f-4780-8dc4-4b2886b4d15c
-md"# Check transition matrices"
-
-# ╔═╡ c36dd850-2009-40dc-bdce-08cc32bd263a
-ZebrafishHMM2023.artr_wolf_2023_fishes(22)
-
-# ╔═╡ eeebdd6a-49b7-4649-8e32-33bad07a7af4
-
-
 # ╔═╡ 6ac94515-4e81-4eb5-88d7-eb8eb193ac76
 my_my_λ = 1/0.2
 
-# ╔═╡ 79ececc9-607c-4370-accc-b3942e07eedd
-let fig = Makie.Figure()
-	temperature_colors = Dict(18=>"blue", 22=>"cyan", 26=>"green", 30=>"orange", 33=>"red")
-	for (col, _thresh) = enumerate([0, 5000, 7000, 8000, 10000])
-		ax = Makie.Axis(fig[1,col], width=200, height=200)
-		for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures()
-			
-			behavior_T = behavior_full_hmms[temperature].transition_matrix
-	
-			artr_T_scaled_array = Matrix{Float64}[]
-			
-			for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
-				artr_T = float(artr_hmms[(; temperature, fish)].transition_matrix)
-				scaling_power = my_my_λ / artr_time_unit[(; temperature, fish)]
-				artr_T_scaled = artr_T^scaling_power
-	
-				push!(artr_T_scaled_array, artr_T_scaled)
-				
-				if size(ZebrafishHMM2023.load_artr_wolf_2023(; temperature, fish).left, 2) > _thresh
-					Makie.scatter!(ax, vec(behavior_T), vec(artr_T_scaled); color=temperature_colors[temperature], markersize=5)
-				end
-			end
-	
-			#Makie.scatter!(ax, vec(behavior_T), vec(mean(artr_T_scaled_array)); color=(temperature_colors[temperature], 0.5), markersize=20)
-		end
-		Makie.xlims!(ax, -0.1, 1)
-		Makie.ylims!(ax, -0.1, 1)
-	end
-	Makie.resize_to_layout!(fig)
-	fig
-end
-
 # ╔═╡ 1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
-md"# Save data for Matteo (Behavior from Neuro)"
+md"# Save data for Matteo (Behavior from Neural HMMs)"
 
 # ╔═╡ 90f17950-5f5f-4406-ae9e-d5d81f28c8b1
 _tmpdir = mktempdir()
@@ -359,7 +323,7 @@ end
 # ╠═c1fa7427-1167-446b-a8e7-50f0b321ae2d
 # ╠═a6c708f3-7f96-416e-8aca-1a7c02a21e98
 # ╠═ac410781-0712-45dd-b3eb-713b5629c329
-# ╠═fd8ef759-e4e2-4a8b-8fa7-bafad992ef7a
+# ╠═aa0eda17-4d29-4dbf-b42f-b27eb574c7b5
 # ╠═7ae067c1-8c0c-4f91-b8e1-8c39a32c821a
 # ╠═3b6b3cc3-d29f-469b-ad3a-e0cc50017b02
 # ╠═37ab290b-e7b6-42b2-bccf-7d73c1916557
@@ -375,10 +339,6 @@ end
 # ╠═29371878-01c9-4f1e-b472-d224bf3e5504
 # ╠═4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
 # ╠═bced5da9-0584-474d-8dd2-4025eb040e67
-# ╠═e25e545e-d41f-4780-8dc4-4b2886b4d15c
-# ╠═79ececc9-607c-4370-accc-b3942e07eedd
-# ╠═c36dd850-2009-40dc-bdce-08cc32bd263a
-# ╠═eeebdd6a-49b7-4649-8e32-33bad07a7af4
 # ╠═6ac94515-4e81-4eb5-88d7-eb8eb193ac76
 # ╠═1cf0fbf5-35de-4437-82d2-e5d7ebeadac7
 # ╠═90f17950-5f5f-4406-ae9e-d5d81f28c8b1
