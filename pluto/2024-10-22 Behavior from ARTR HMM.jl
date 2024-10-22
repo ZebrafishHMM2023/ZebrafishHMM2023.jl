@@ -300,11 +300,50 @@ end
 # ╔═╡ bb4fd9ad-247c-405d-911b-2d36545e837c
 md"# MSR"
 
+# ╔═╡ ae172866-6924-46ed-b8e5-d74563a4377c
+function mean_MSR(traj::AbstractVector, q::Int)
+    return mean(abs2, sum(traj[i:(i + q)]) for i = 1:length(traj) - q)
+end
+
+# ╔═╡ ff68a3d4-27d9-4ee4-9dec-a1ea82a03ec4
+function std_MSR(traj::AbstractVector, q::Int)
+    return std(abs2, sum(traj[i:(i + q)]) for i = 1:length(traj) - q) / sqrt(length(traj) - q)
+end
+
+# ╔═╡ 5ccc9a64-afff-4076-b599-6b81a79ba400
+function MSR_analyses(δθ)
+	real_msr_mean = [mean_MSR(δθ, q) for q = 1:length(δθ)]
+	real_msr_std = [std_MSR(δθ, q) for q = 1:length(δθ)]
+
+	shuffled_δθ = shuffle(δθ)
+	
+	shuffled_msr_mean = [mean_MSR(shuffled_δθ, q) for q = 1:length(δθ)]
+	shuffled_msr_std = [std_MSR(shuffled_δθ, q) for q = 1:length(δθ)]
+
+	return (; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std)
+end
+
+# ╔═╡ 294edeb3-b1b1-41aa-8a6b-2b5a3b161642
+temperature=30
+fish=6
+rep=8
+
+# ╔═╡ 3320fefd-6b0b-4e27-99da-59683770591c
+δθ = CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle
+
+# ╔═╡ 3667bba1-d774-4ce5-a94c-d3b6c5bf555d
+(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ)
+
 # ╔═╡ 5c45b9ee-caa6-499f-b610-4730b2f842c5
-let temperature=30, fish=6, rep=8
-	δθ = CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle
-	msr = [ZebrafishHMM2023.MSR(δθ, q) for q = 1:length(δθ)]
-	msr_shuffled = [ZebrafishHMM2023.MSR(shuffle(δθ), q) for q = 1:length(δθ)]
+
+
+# ╔═╡ 267cf637-c931-4088-9a68-2a38e914b950
+let fig = Makie.Figure()
+	ax = Makie.axis(fig[1,1], width=400, height=400)
+	Makie.lines!(ax, real_msr_mean)
+	Makie.lines!(ax, shuffled_msr_mean)
+	Makie.resize_to_layout!(fig)
+	fig
 end
 
 # ╔═╡ Cell order:
@@ -350,4 +389,11 @@ end
 # ╠═3b9353ab-85ea-42a7-837c-cdf313e476b0
 # ╠═c179f81c-fffc-4310-8101-e9d344bc2c82
 # ╠═bb4fd9ad-247c-405d-911b-2d36545e837c
+# ╠═ae172866-6924-46ed-b8e5-d74563a4377c
+# ╠═ff68a3d4-27d9-4ee4-9dec-a1ea82a03ec4
+# ╠═5ccc9a64-afff-4076-b599-6b81a79ba400
+# ╠═294edeb3-b1b1-41aa-8a6b-2b5a3b161642
+# ╠═3320fefd-6b0b-4e27-99da-59683770591c
+# ╠═3667bba1-d774-4ce5-a94c-d3b6c5bf555d
 # ╠═5c45b9ee-caa6-499f-b610-4730b2f842c5
+# ╠═267cf637-c931-4088-9a68-2a38e914b950
