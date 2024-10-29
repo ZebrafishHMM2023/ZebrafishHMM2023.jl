@@ -86,9 +86,6 @@ artr_viterbi_states = Dict((; temperature, fish) =>
 	for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
 )
 
-# ╔═╡ aa0eda17-4d29-4dbf-b42f-b27eb574c7b5
-rand(artr_hmms[(; temperature=26, fish=6)], 10).state_seq
-
 # ╔═╡ 7ae067c1-8c0c-4f91-b8e1-8c39a32c821a
 for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
 	@assert all(diff(artr_data[(; temperature, fish)].time) .≈ mean(diff(artr_data[(; temperature, fish)].time)))
@@ -151,7 +148,7 @@ end
 behavior_full_hmms = Dict(temperature => train_full_behavior_hmm(bouts_hmms[temperature], temperature) for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures())
 
 # ╔═╡ f3750f97-ac22-491e-99f1-d9fc1a99e423
-
+#behavior_long_hmm = Dict(temperature => train_full_behavior_hmm(bouts_hmms[temperature], temperature) for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures())
 
 # ╔═╡ 369d6c55-4239-4eeb-b23b-4c3910d791fd
 md"# Sample behavior from ARTR HMM (not from ARTR data)"
@@ -179,109 +176,9 @@ md"# Sample behavior from ARTR HMM (not from ARTR data)"
 # 	return all_states[selected_indices], selected_bout_times[1:length(selected_indices)] / time_scaling_factor
 # end
 
-# ╔═╡ 51d4b383-4afc-4827-a253-5fbcb8b56e16
-function sample_behavior_states_from_artr_v2(; temperature::Int, fish::Int, λ::Real, traj_length = 100_000)
-	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
-
-	# instead of using the Viterbi labeled ARTR data, we will use the HMM to sample really long trajectories
-	#artr_states = artr_viterbi_states[(; temperature, fish)]
-	artr_states = rand(artr_hmms[(; temperature, fish)], traj_length).state_seq
-
-	artr_recording_duration = length(artr_states) * artr_time_unit[(; temperature, fish)]
-	artr_recording_times = (1:length(artr_states)) .* artr_time_unit[(; temperature, fish)]
-
-	selected_times = Float64[]
-	selected_times_total = 0.0
-	while true
-		Δt = rand(all_bout_times)
-		if (selected_times_total + Δt) * λ < artr_recording_duration
-			selected_times_total += Δt
-			push!(selected_times, Δt)
-		else
-			break
-		end
-	end
-	@assert selected_times_total * λ < artr_recording_duration
-
-	#selected_indices = [argmin(abs.(t * λ .- artr_recording_times)) for t = cumsum(selected_times)]
-	selected_indices = [findfirst(artr_recording_times .- t * λ .≥ 0) for t = cumsum(selected_times)]
-	return artr_states[selected_indices], selected_times
-end
-
-# ╔═╡ 51fc8534-b2f4-46fa-85d1-b49d252f2112
-function sample_full_behavior_from_artr(; temperature::Int, fish::Int, λ::Real)
-	states, times = sample_behavior_states_from_artr_v2(; temperature, fish, λ)
-	return (; obs_seq = [rand(HiddenMarkovModels.obs_distribution(behavior_full_hmms[temperature], s)) for s = states], state_seq = states, times)
-end
-
-# ╔═╡ 2291f23b-b69f-4a37-9c51-945c1d0de050
-function sample_full_behavior_from_artr_times_corrected(; temperature::Int, fish::Int, λ::Real)
-	samples_0 = sample_full_behavior_from_artr(; temperature, fish, λ)
-	@assert length(samples_0.obs_seq) == length(samples_0.times) == length(samples_0.state_seq)
-	obs_seq = [ZebrafishHMM2023.ZebrafishHMM_G3_Sym_Full_Obs(s.θ, s.d, t) for (s, t) = zip(samples_0.obs_seq, samples_0.times)]
-	return (; obs_seq, samples_0.state_seq)
-end
-
 # ╔═╡ 29371878-01c9-4f1e-b472-d224bf3e5504
 my_λ = 1 / 0.44
 #my_λ = 0.44 # try inverted λ
-
-# ╔═╡ 4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
-let fig = Makie.Figure()
-	for (n, T) = enumerate((18, 26, 33))
-		fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
-	    sample = sample_full_behavior_from_artr(; temperature=T, fish, λ=my_λ)
-	    path = ZebrafishHMM2023.to_spatiotemporal_trajectory(sample.obs_seq)
-		#path[:, 3] .= times
-		
-	    ax = Makie.Axis(fig[1,n], width=200, height=200, title="$T C", xlabel="mm", ylabel="mm")
-	    Makie.scatterlines!(ax, path[:, 1:2], markercolor=(sample.state_seq .== 1), markersize=3)
-	    Makie.xlims!(ax, -50, 50)
-	    Makie.ylims!(ax, -50, 50)
-	end
-	Makie.resize_to_layout!(fig)
-	fig
-end
-
-# ╔═╡ bced5da9-0584-474d-8dd2-4025eb040e67
-let fig = Makie.Figure()
-	_sz = 100
-	_lw = 2
-
-	λ = my_λ
-
-	fishes = Dict(18 => 14, 26 => 7, 33 => 17)
-
-	for (n, T) = enumerate((18, 26, 33))
-		#fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
-		fish = fishes[T]
-		
-		samples = [s for _ = 1:100 for s = sample_full_behavior_from_artr_times_corrected(; temperature=T, fish, λ).obs_seq]
-		data = [obs for traj = ZebrafishHMM2023.load_full_obs(T) for obs = traj]
-
-		_bins = -200:200
-	    ax = Makie.Axis(fig[1,n], width=_sz, height=_sz, title="$T C", yscale=log10, xlabel="bout angle (deg.)", ylabel="frequency", xticks=[-150,0,150])
-	    Makie.hist!(ax, [obs.θ for obs = data], normalization=:pdf, bins=_bins, color=:gray, label="data")
-	    Makie.stephist!(ax, [obs.θ for obs = samples], normalization=:pdf, bins=_bins, color=:red, linewidth=_lw, label="gen.")
-	    Makie.ylims!(ax, 1e-4, 0.1)
-	
-	    _bins = 0:0.1:12
-	    ax = Makie.Axis(fig[2,n], width=_sz, height=_sz, yscale=log10, xlabel="bout distance (mm)", ylabel="frequency")
-	    Makie.hist!(ax, [obs.d for obs = data], normalization=:pdf, bins=_bins, color=:gray, label="data")
-	    Makie.stephist!(ax, [obs.d for obs = samples], normalization=:pdf, bins=_bins, color=:red, linewidth=_lw, label="gen.")
-	    Makie.ylims!(ax, 1e-4, 1)
-	    
-	    _bins = 0:0.5:50
-	    ax = Makie.Axis(fig[3,n], width=_sz, height=_sz, yscale=log10, xlabel="interbout time (s)", ylabel="frequency")
-	    Makie.hist!(ax, [obs.t for obs = data], normalization=:pdf, bins=_bins, color=:gray, label="data")
-	    Makie.stephist!(ax, [obs.t for obs = samples], normalization=:pdf, bins=_bins, color=:red, linewidth=_lw, label="gen.")
-	    Makie.ylims!(ax, 1e-4, 1)
-	
-	    n == 3 && Makie.axislegend(ax)
-	end
-	Makie.resize_to_layout!(fig)
-	fig
-end
 
 # ╔═╡ 6ac94515-4e81-4eb5-88d7-eb8eb193ac76
 my_my_λ = 1/0.2
@@ -295,17 +192,6 @@ _tmpdir = mktempdir()
 # ╔═╡ 3b9353ab-85ea-42a7-837c-cdf313e476b0
 my_λ
 
-# ╔═╡ c179f81c-fffc-4310-8101-e9d344bc2c82
-for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
-	#λ = 2.775
-	λ = my_λ
-	for rep = 1:100
-		sample = sample_full_behavior_from_artr_times_corrected(; temperature, fish, λ)
-		CSV.write(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), (; bout_angle = [s.θ for s = sample.obs_seq], bout_time = [s.t for s = sample.obs_seq], bout_dist = [s.d for s = sample.obs_seq], state = sample.state_seq))
-	end
-	@info "temperature = $temperature, fish = $fish DONE"
-end
-
 # ╔═╡ bb4fd9ad-247c-405d-911b-2d36545e837c
 md"# MSR"
 
@@ -314,7 +200,7 @@ function mean_MSR(trajs::AbstractVector{<:AbstractVector}, q::Int)
 	std_trajs = [(traj .- mean(traj) / std(traj)) for traj = trajs]
 	#std_trajs = [traj .- mean(traj) for traj = trajs]
 	#std_trajs = trajs
-    return mean(abs2, sum(traj[i:(i + q)]) for traj = std_trajs for i = 1:length(traj) - q)
+    return mean(abs2(sum(traj[i:(i + q)])) for traj = std_trajs for i = 1:length(traj) - q)
 end
 
 # ╔═╡ ff68a3d4-27d9-4ee4-9dec-a1ea82a03ec4
@@ -326,11 +212,11 @@ function std_MSR(trajs::AbstractVector{<:AbstractVector}, q::Int)
 end
 
 # ╔═╡ 5ccc9a64-afff-4076-b599-6b81a79ba400
-function MSR_analyses(trajs::AbstractVector{<:AbstractVector}; qmax = 100)
+function MSR_analyses(trajs::AbstractVector{<:AbstractVector{<:Real}}; qmax = 100)
 	real_msr_mean = [mean_MSR(trajs, q) for q = 0:qmax]
 	real_msr_std = [std_MSR(trajs, q) for q = 0:qmax]
 
-	shuffled_trajs = [shuffle(traj) for traj = trajs]
+	shuffled_trajs = [rand(traj, length(traj)) for traj = trajs]
 	
 	shuffled_msr_mean = [mean_MSR(shuffled_trajs, q) for q = 0:qmax]
 	shuffled_msr_std = [std_MSR(shuffled_trajs, q) for q = 0:qmax]
@@ -475,7 +361,7 @@ let fig = Makie.Figure()
 	temperature = 26 # temperature of the long trajectory
 
 	q_for_inset = 20
-				
+
 	ax = Makie.Axis(fig[1,1], width=300, height=300, xlabel="q", ylabel="MSR(q)", xgridvisible=false, ygridvisible=false)
 
 	null_coeff = var([δθ for fish = trajs_long for traj = fish for δθ = traj])
@@ -612,10 +498,217 @@ mean(map(length, ZebrafishHMM2023.load_full_obs(18)))
 map(length, ZebrafishHMM2023.load_full_obs(18))
 
 # ╔═╡ 7456ec34-1b23-4f4d-b4bb-3d9d41864a67
+md"# HMMs trained on long trajectories of individual fish"
 
+# ╔═╡ d47a91f7-6c68-4f13-a6c8-a17f54713504
+function my_train_for_long_trajs(fish_trajs)
+	hmm = ZebrafishHMM2023.ZebrafishHMM_G3_Sym(rand(), rand(3,3), 1.0, Gamma(1.5, 20.0), 1.0)
+	hmm = ZebrafishHMM2023.normalize_all!(hmm)
+	(hmm, lL) = HiddenMarkovModels.baum_welch(hmm, fish_trajs, length(fish_trajs); max_iterations=5000, check_loglikelihood_increasing=false, atol = ZebrafishHMM2023.ATol(1e-5))
+	return hmm
+end
 
-# ╔═╡ 9546fbf5-719e-4631-bdb4-290990850ff6
+# ╔═╡ 7a785046-99a2-44dc-a229-134d32f85655
+long_hmms = [my_train_for_long_trajs(fish) for fish = trajs_long]
 
+# ╔═╡ abb3ac26-dacc-4534-beba-b656ae06401f
+function my_train_full_behavior_hmm_for_long_trajs(bouts_hmm, fish_trajs)	
+	hmm = ZebrafishHMM2023.ZebrafishHMM_G3_Sym_Full_Exp(;
+        pinit_turn=rand(), 
+		transition_matrix=ZebrafishHMM2023.normalize_transition_matrix(rand(3,3)),
+        σforw=0.1, turn=Gamma(1.5, 20.0),
+        forward_displacement=Gamma(1.5, 1.2),
+		turn_displacement=Gamma(1.5, 1.2),
+        forward_interboutinterval=Exponential(1.8),
+		turn_interboutinterval=Exponential(1.8),
+        min_alpha = bouts_hmm.min_turn_alpha,
+        only_train_spacetime=true
+    )
+
+    hmm.pinit_turn = bouts_hmm.pinit_turn
+    hmm.transition_matrix .= bouts_hmm.transition_matrix
+    hmm.σforw = bouts_hmm.σforw
+    hmm.turn = bouts_hmm.turn
+
+    (hmm, lL) = HiddenMarkovModels.baum_welch(hmm, fish_trajs, length(fish_trajs); max_iterations = 5000, check_loglikelihood_increasing = false, atol = ZebrafishHMM2023.ATol(1e-5))
+
+    return hmm
+end
+
+# ╔═╡ 9ab9ebcb-9722-46e8-a3a1-3b43d41ad472
+long_full_hmms = [my_train_full_behavior_hmm_for_long_trajs(bouts_hmm, fish_trajs) for (bouts_hmm, fish_trajs) = zip(long_hmms, ZebrafishHMM2023.legoc2021_single_fish_T26_full_obs())]
+
+# ╔═╡ 0153111a-db86-473e-bb98-ee3d8d3a8607
+ZebrafishHMM2023.legoc2021_single_fish_T26_full_obs()[1][1][1].θ
+
+# ╔═╡ 3d407a1d-371b-405e-ac10-2dfb1cc1e017
+[var(x for traj = fish for x = traj) for fish = trajs_long]
+
+# ╔═╡ f0d7606f-18ab-453a-8deb-618e0c9680eb
+let fig = Makie.Figure()
+	for (n, fish) = enumerate(trajs_long)
+		row, col = fldmod1(n, 6)
+		ax = Makie.Axis(fig[row, col], width=100, height=100)
+		Makie.hist!(ax, [x for traj = fish for x = traj]; bins=-100:5:100, normalization=:pdf)
+		Makie.ylims!(ax, 0, 0.07)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ 4c2e9ba7-fc82-416e-8e14-4d5ce138d2be
+let fig = Makie.Figure()
+	for (n, T) = enumerate((18, 26, 33))
+		fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
+	    sample = sample_full_behavior_from_artr(; temperature=T, fish, λ=my_λ)
+	    path = ZebrafishHMM2023.to_spatiotemporal_trajectory(sample.obs_seq)
+		#path[:, 3] .= times
+		
+	    ax = Makie.Axis(fig[1,n], width=200, height=200, title="$T C", xlabel="mm", ylabel="mm")
+	    Makie.scatterlines!(ax, path[:, 1:2], markercolor=(sample.state_seq .== 1), markersize=3)
+	    Makie.xlims!(ax, -50, 50)
+	    Makie.ylims!(ax, -50, 50)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ bced5da9-0584-474d-8dd2-4025eb040e67
+let fig = Makie.Figure()
+	_sz = 100
+	_lw = 2
+
+	λ = my_λ
+
+	fishes = Dict(18 => 14, 26 => 7, 33 => 17)
+
+	for (n, T) = enumerate((18, 26, 33))
+		#fish = rand(ZebrafishHMM2023.artr_wolf_2023_fishes(T))
+		fish = fishes[T]
+		
+		samples = [s for _ = 1:100 for s = sample_full_behavior_from_artr_times_corrected(; temperature=T, fish, λ).obs_seq]
+		data = [obs for traj = ZebrafishHMM2023.load_full_obs(T) for obs = traj]
+
+		_bins = -200:200
+	    ax = Makie.Axis(fig[1,n], width=_sz, height=_sz, title="$T C", yscale=log10, xlabel="bout angle (deg.)", ylabel="frequency", xticks=[-150,0,150])
+	    Makie.hist!(ax, [obs.θ for obs = data], normalization=:pdf, bins=_bins, color=:gray, label="data")
+	    Makie.stephist!(ax, [obs.θ for obs = samples], normalization=:pdf, bins=_bins, color=:red, linewidth=_lw, label="gen.")
+	    Makie.ylims!(ax, 1e-4, 0.1)
+	
+	    _bins = 0:0.1:12
+	    ax = Makie.Axis(fig[2,n], width=_sz, height=_sz, yscale=log10, xlabel="bout distance (mm)", ylabel="frequency")
+	    Makie.hist!(ax, [obs.d for obs = data], normalization=:pdf, bins=_bins, color=:gray, label="data")
+	    Makie.stephist!(ax, [obs.d for obs = samples], normalization=:pdf, bins=_bins, color=:red, linewidth=_lw, label="gen.")
+	    Makie.ylims!(ax, 1e-4, 1)
+	    
+	    _bins = 0:0.5:50
+	    ax = Makie.Axis(fig[3,n], width=_sz, height=_sz, yscale=log10, xlabel="interbout time (s)", ylabel="frequency")
+	    Makie.hist!(ax, [obs.t for obs = data], normalization=:pdf, bins=_bins, color=:gray, label="data")
+	    Makie.stephist!(ax, [obs.t for obs = samples], normalization=:pdf, bins=_bins, color=:red, linewidth=_lw, label="gen.")
+	    Makie.ylims!(ax, 1e-4, 1)
+	
+	    n == 3 && Makie.axislegend(ax)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ c179f81c-fffc-4310-8101-e9d344bc2c82
+for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures(), fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
+	#λ = 2.775
+	λ = my_λ
+	for rep = 1:100
+		sample = sample_full_behavior_from_artr_times_corrected(; temperature, fish, λ)
+		CSV.write(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), (; bout_angle = [s.θ for s = sample.obs_seq], bout_time = [s.t for s = sample.obs_seq], bout_dist = [s.d for s = sample.obs_seq], state = sample.state_seq))
+	end
+	@info "temperature = $temperature, fish = $fish DONE"
+end
+
+# ╔═╡ 51fc8534-b2f4-46fa-85d1-b49d252f2112
+function sample_full_behavior_from_artr(; temperature::Int, fish::Int, λ::Real)
+	states, times = sample_behavior_states_from_artr_v2(; temperature, fish, λ)
+	return (; obs_seq = [rand(HiddenMarkovModels.obs_distribution(behavior_full_hmms[temperature], s)) for s = states], state_seq = states, times)
+end
+
+# ╔═╡ 3d1e5f88-53e9-4684-aa76-d7e400c31d40
+function sample_full_behavior_from_artr(; temperature::Int, fish::Int, λ::Real)
+	states, times = sample_behavior_states_from_artr_v2(; temperature, fish, λ)
+	return (; obs_seq = [rand(HiddenMarkovModels.obs_distribution(behavior_full_hmms[temperature], s)) for s = states], state_seq = states, times)
+end
+
+# ╔═╡ 2291f23b-b69f-4a37-9c51-945c1d0de050
+function sample_full_behavior_from_artr_times_corrected(; temperature::Int, fish::Int, λ::Real)
+	samples_0 = sample_full_behavior_from_artr(; temperature, fish, λ)
+	@assert length(samples_0.obs_seq) == length(samples_0.times) == length(samples_0.state_seq)
+	obs_seq = [ZebrafishHMM2023.ZebrafishHMM_G3_Sym_Full_Obs(s.θ, s.d, t) for (s, t) = zip(samples_0.obs_seq, samples_0.times)]
+	return (; obs_seq, samples_0.state_seq)
+end
+
+# ╔═╡ 19dac8cb-adc5-48b3-b2b6-c77b1b09d521
+function sample_full_behavior_from_artr_times_corrected(; temperature::Int, fish::Int, λ::Real)
+	samples_0 = sample_full_behavior_from_artr(; temperature, fish, λ)
+	@assert length(samples_0.obs_seq) == length(samples_0.times) == length(samples_0.state_seq)
+	obs_seq = [ZebrafishHMM2023.ZebrafishHMM_G3_Sym_Full_Obs(s.θ, s.d, t) for (s, t) = zip(samples_0.obs_seq, samples_0.times)]
+	return (; obs_seq, samples_0.state_seq)
+end
+
+# ╔═╡ dab80bba-3ccb-462c-b67e-94bded3278f2
+function sample_behavior_states_from_artr_v2(; temperature::Int, fish::Int, λ::Real, traj_length = 100_000)
+	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
+
+	# instead of using the Viterbi labeled ARTR data, we will use the HMM to sample really long trajectories
+	#artr_states = artr_viterbi_states[(; temperature, fish)]
+	artr_states = rand(artr_hmms[(; temperature, fish)], traj_length).state_seq
+
+	artr_recording_duration = length(artr_states) * artr_time_unit[(; temperature, fish)]
+	artr_recording_times = (1:length(artr_states)) .* artr_time_unit[(; temperature, fish)]
+
+	selected_times = Float64[]
+	selected_times_total = 0.0
+	while true
+		Δt = rand(all_bout_times)
+		if (selected_times_total + Δt) * λ < artr_recording_duration
+			selected_times_total += Δt
+			push!(selected_times, Δt)
+		else
+			break
+		end
+	end
+	@assert selected_times_total * λ < artr_recording_duration
+
+	#selected_indices = [argmin(abs.(t * λ .- artr_recording_times)) for t = cumsum(selected_times)]
+	selected_indices = [findfirst(artr_recording_times .- t * λ .≥ 0) for t = cumsum(selected_times)]
+	return artr_states[selected_indices], selected_times
+end
+
+# ╔═╡ 51d4b383-4afc-4827-a253-5fbcb8b56e16
+function sample_behavior_states_from_artr_v2(; temperature::Int, fish::Int, λ::Real, traj_length = 100_000)
+	all_bout_times = [obs.t for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]
+
+	# instead of using the Viterbi labeled ARTR data, we will use the HMM to sample really long trajectories
+	#artr_states = artr_viterbi_states[(; temperature, fish)]
+	artr_states = rand(artr_hmms[(; temperature, fish)], traj_length).state_seq
+
+	artr_recording_duration = length(artr_states) * artr_time_unit[(; temperature, fish)]
+	artr_recording_times = (1:length(artr_states)) .* artr_time_unit[(; temperature, fish)]
+
+	selected_times = Float64[]
+	selected_times_total = 0.0
+	while true
+		Δt = rand(all_bout_times)
+		if (selected_times_total + Δt) * λ < artr_recording_duration
+			selected_times_total += Δt
+			push!(selected_times, Δt)
+		else
+			break
+		end
+	end
+	@assert selected_times_total * λ < artr_recording_duration
+
+	#selected_indices = [argmin(abs.(t * λ .- artr_recording_times)) for t = cumsum(selected_times)]
+	selected_indices = [findfirst(artr_recording_times .- t * λ .≥ 0) for t = cumsum(selected_times)]
+	return artr_states[selected_indices], selected_times
+end
 
 # ╔═╡ Cell order:
 # ╠═5b3604a6-3dcc-11ef-1ff1-a71b51c7d8e9
@@ -640,7 +733,6 @@ map(length, ZebrafishHMM2023.load_full_obs(18))
 # ╠═c1fa7427-1167-446b-a8e7-50f0b321ae2d
 # ╠═a6c708f3-7f96-416e-8aca-1a7c02a21e98
 # ╠═ac410781-0712-45dd-b3eb-713b5629c329
-# ╠═aa0eda17-4d29-4dbf-b42f-b27eb574c7b5
 # ╠═7ae067c1-8c0c-4f91-b8e1-8c39a32c821a
 # ╠═3b6b3cc3-d29f-469b-ad3a-e0cc50017b02
 # ╠═37ab290b-e7b6-42b2-bccf-7d73c1916557
@@ -680,4 +772,13 @@ map(length, ZebrafishHMM2023.load_full_obs(18))
 # ╠═7b96c684-d1cf-4702-816e-2bf7cb1561bb
 # ╠═0ab3e8bb-ef4d-4937-8e84-77f6acb2acd0
 # ╠═7456ec34-1b23-4f4d-b4bb-3d9d41864a67
-# ╠═9546fbf5-719e-4631-bdb4-290990850ff6
+# ╠═d47a91f7-6c68-4f13-a6c8-a17f54713504
+# ╠═7a785046-99a2-44dc-a229-134d32f85655
+# ╠═abb3ac26-dacc-4534-beba-b656ae06401f
+# ╠═9ab9ebcb-9722-46e8-a3a1-3b43d41ad472
+# ╠═0153111a-db86-473e-bb98-ee3d8d3a8607
+# ╠═3d407a1d-371b-405e-ac10-2dfb1cc1e017
+# ╠═f0d7606f-18ab-453a-8deb-618e0c9680eb
+# ╠═dab80bba-3ccb-462c-b67e-94bded3278f2
+# ╠═3d1e5f88-53e9-4684-aa76-d7e400c31d40
+# ╠═19dac8cb-adc5-48b3-b2b6-c77b1b09d521
