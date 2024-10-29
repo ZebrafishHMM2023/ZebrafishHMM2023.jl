@@ -16,6 +16,9 @@ using Statistics: mean
 # ╔═╡ 2b6c2c33-1168-49b1-82a3-10f9f6478188
 using Statistics: std
 
+# ╔═╡ fbb0e774-cf43-4cea-8057-81c36c8d3d04
+using Statistics: var
+
 # ╔═╡ 8398c332-235b-4f6c-ab1e-8b5fd62d2d5a
 using Distributions: Gamma
 
@@ -146,6 +149,9 @@ end
 
 # ╔═╡ a72cad49-5d10-453b-81c3-af9bb4b0fab7
 behavior_full_hmms = Dict(temperature => train_full_behavior_hmm(bouts_hmms[temperature], temperature) for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures())
+
+# ╔═╡ f3750f97-ac22-491e-99f1-d9fc1a99e423
+
 
 # ╔═╡ 369d6c55-4239-4eeb-b23b-4c3910d791fd
 md"# Sample behavior from ARTR HMM (not from ARTR data)"
@@ -305,28 +311,36 @@ md"# MSR"
 
 # ╔═╡ ae172866-6924-46ed-b8e5-d74563a4377c
 function mean_MSR(trajs::AbstractVector{<:AbstractVector}, q::Int)
-    return mean(abs2, sum(traj[i:(i + q)]) for traj = trajs for i = 1:length(traj) - q)
+	std_trajs = [(traj .- mean(traj) / std(traj)) for traj = trajs]
+	#std_trajs = [traj .- mean(traj) for traj = trajs]
+	#std_trajs = trajs
+    return mean(abs2, sum(traj[i:(i + q)]) for traj = std_trajs for i = 1:length(traj) - q)
 end
 
 # ╔═╡ ff68a3d4-27d9-4ee4-9dec-a1ea82a03ec4
 function std_MSR(trajs::AbstractVector{<:AbstractVector}, q::Int)
-    return std(abs2(sum(traj[i:(i + q)])) for traj = trajs for i = 1:length(traj) - q) / sqrt(sum(length(traj) - q for traj = trajs))
+	std_trajs = [(traj .- mean(traj) / std(traj)) for traj = trajs]
+	#std_trajs = [traj .- mean(traj) for traj = trajs]
+	#std_trajs = trajs
+    return std(abs2(sum(traj[i:(i + q)])) for traj = trajs for i = 1:length(traj) - q) / sqrt(sum(length(traj) - q for traj = std_trajs))
 end
 
 # ╔═╡ 5ccc9a64-afff-4076-b599-6b81a79ba400
 function MSR_analyses(trajs::AbstractVector{<:AbstractVector}; qmax = 100)
-	real_msr_mean = [mean_MSR(trajs, q) for q = 1:qmax]
-	real_msr_std = [std_MSR(trajs, q) for q = 1:qmax]
+	real_msr_mean = [mean_MSR(trajs, q) for q = 0:qmax]
+	real_msr_std = [std_MSR(trajs, q) for q = 0:qmax]
 
 	shuffled_trajs = [shuffle(traj) for traj = trajs]
 	
-	shuffled_msr_mean = [mean_MSR(shuffled_trajs, q) for q = 1:qmax]
-	shuffled_msr_std = [std_MSR(shuffled_trajs, q) for q = 1:qmax]
+	shuffled_msr_mean = [mean_MSR(shuffled_trajs, q) for q = 0:qmax]
+	shuffled_msr_std = [std_MSR(shuffled_trajs, q) for q = 0:qmax]
 
 	return (; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std)
 end
 
 # ╔═╡ 267cf637-c931-4088-9a68-2a38e914b950
+# ╠═╡ disabled = true
+#=╠═╡
 let fig = Makie.Figure()
 	qmax = 30
 	for (col, temperature) = enumerate(ZebrafishHMM2023.artr_wolf_2023_temperatures())
@@ -339,25 +353,25 @@ let fig = Makie.Figure()
 			δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for rep = 1:100]
 		
 			(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_hmm; qmax)
-			# Makie.band!(ax, 1:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
-			# Makie.band!(ax, 1:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
-			Makie.lines!(ax, 1:qmax, real_msr_mean, color=(:blue, 0.6), linewidth=0.5)
+			# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+			# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+			Makie.lines!(ax, 0:qmax, real_msr_mean, color=(:blue, 0.6), linewidth=0.5)
 		end
 
 		δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature) for rep = 1:100]
 
 		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_hmm; qmax)
-		Makie.band!(ax, 1:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
-		Makie.band!(ax, 1:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
-		Makie.lines!(ax, 1:qmax, real_msr_mean, color=:blue, label="ARTR HMM")
+		Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+		Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=:blue, label="ARTR HMM")
 	
 		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_dat; qmax)
-		Makie.band!(ax, 1:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:gray, 0.5))
-		Makie.band!(ax, 1:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:red, 0.5))
-		Makie.lines!(ax, 1:qmax, real_msr_mean, color=:black, label="Data")
-		Makie.lines!(ax, 1:qmax, shuffled_msr_mean, color=:red, label="Data shuffled")
+		Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:gray, 0.5))
+		Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:red, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=:black, label="Data")
+		Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:red, label="Data shuffled")
 		Makie.xlims!(ax, 0, 15)
-		Makie.ylims!(ax, 0, 4e4)
+		#Makie.ylims!(ax, 0, 4e4)
 		if col == 1
 			Makie.axislegend(ax)
 		end
@@ -365,8 +379,11 @@ let fig = Makie.Figure()
 	Makie.resize_to_layout!(fig)
 	fig
 end
+  ╠═╡ =#
 
 # ╔═╡ e7babee3-87f5-4cff-a60c-5006f8c92cd9
+# ╠═╡ disabled = true
+#=╠═╡
 let fig = Makie.Figure()
 	qmax = 30
 	for (col, temperature) = enumerate(ZebrafishHMM2023.artr_wolf_2023_temperatures())
@@ -378,16 +395,16 @@ let fig = Makie.Figure()
 			δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for rep = 1:100]
 		
 			(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_hmm; qmax)
-			# Makie.band!(ax, 1:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
-			# Makie.band!(ax, 1:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
-			Makie.lines!(ax, 1:qmax, real_msr_mean, color=:lightblue)
+			# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+			# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+			Makie.lines!(ax, 0:qmax, real_msr_mean, color=:lightblue)
 		end
 		
 		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_dat; qmax)
-		Makie.band!(ax, 1:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:gray, 0.5))
-		Makie.band!(ax, 1:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:red, 0.5))
-		Makie.lines!(ax, 1:qmax, real_msr_mean, color=:black, label="Data")
-		Makie.lines!(ax, 1:qmax, shuffled_msr_mean, color=:red, label="Data shuffled")
+		Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:gray, 0.5))
+		Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:red, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=:black, label="Data")
+		Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:red, label="Data shuffled")
 		Makie.xlims!(ax, 0, 15)
 		Makie.ylims!(ax, 0, 4e4)
 		if col == 1
@@ -397,12 +414,208 @@ let fig = Makie.Figure()
 	Makie.resize_to_layout!(fig)
 	fig
 end
+  ╠═╡ =#
 
 # ╔═╡ f6963397-4e09-4cfc-8d33-64a5a37cad96
 [length([obs.θ for traj = ZebrafishHMM2023.load_full_obs(temperature) for obs = traj]) for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures()]
 
 # ╔═╡ eb54ac49-2607-4590-bbc1-84cc7cca9d52
 [mean(length(CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle) for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature) for rep = 1:100) for temperature = ZebrafishHMM2023.artr_wolf_2023_temperatures()]
+
+# ╔═╡ 159900f7-1b9f-4b0f-8b89-c7db803137a3
+md"# Long trajectories"
+
+# ╔═╡ 63c2663b-4cf6-4b90-96d1-ad7f840b02ff
+trajs_long = ZebrafishHMM2023.legoc2021_single_fish_T26_trajs();
+
+# ╔═╡ 550b1a3a-ba25-48f7-aec4-509704ffe21c
+let fig = Makie.Figure()
+	qmax = 30
+	
+	ax = Makie.Axis(fig[1,1], width=400, height=400)
+
+	for fish = trajs_long
+		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(fish; qmax)
+		# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+		# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=:lightgreen)
+		Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:lightpink)
+	end
+	
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ ffdb4a8d-6a75-441f-b6a5-c6c3321d37b7
+let fig = Makie.Figure()
+	qmax = 30
+	
+	all_fish_MSR = [MSR_analyses(fish; qmax) for fish = trajs_long]
+	
+	ax = Makie.Axis(fig[1,1], width=400, height=400)
+
+	for fish = all_fish_MSR
+		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = fish
+		# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+		# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=:lightgreen)
+		Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:lightpink)
+	end
+
+	# Makie.lines!(ax, 0:qmax, dropdims(mean(stack(fish.real_msr_mean for fish = all_fish_MSR); dims=2); dims=2); color=:green, linewidth=4)
+	# Makie.lines!(ax, 0:qmax, dropdims(mean(stack(fish.shuffled_msr_mean for fish = all_fish_MSR); dims=2); dims=2); color=:red, linewidth=4)
+
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ 7d179bcd-5dd6-40e3-b96a-5b4d0e7a30a7
+let fig = Makie.Figure()
+	qmax = 40
+	temperature = 26 # temperature of the long trajectory
+
+	q_for_inset = 20
+				
+	ax = Makie.Axis(fig[1,1], width=300, height=300, xlabel="q", ylabel="MSR(q)", xgridvisible=false, ygridvisible=false)
+
+	null_coeff = var([δθ for fish = trajs_long for traj = fish for δθ = traj])
+	Makie.lines!(ax, 0:qmax, null_coeff .* (0:qmax), color=:red, linewidth=4, linestyle=:dash)
+
+	MSR_real_fish = Float64[]
+	MSR_hmm_fish = Float64[]
+	MSR_hmm_shuffled_fish = Float64[]
+
+	for (n, fish) = enumerate(trajs_long)
+		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(fish; qmax)
+		# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+		# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=(:gray, 0.7), linewidth=1)
+		#Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:lightpink)
+
+		push!(MSR_real_fish, real_msr_mean[q_for_inset + 1])
+	end
+
+
+	δθ_dat = [traj for fish = trajs_long for traj = fish]
+	(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_dat; qmax)
+	Makie.lines!(ax, 0:qmax, real_msr_mean, color=:black, linewidth=5, linestyle=:dash, label="data")
+
+	for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
+		δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for rep = 1:100]
+	
+		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_hmm; qmax)
+		# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+		# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=(:blue, 0.9), linewidth=1)
+		#Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=(:red, 0.9), linewidth=1)
+
+		push!(MSR_hmm_fish, real_msr_mean[q_for_inset + 1])
+		push!(MSR_hmm_shuffled_fish, shuffled_msr_mean[q_for_inset + 1])
+	end
+	
+	δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature) for rep = 1:100]
+
+	(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_hmm; qmax)
+	# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+	# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+	Makie.lines!(ax, 0:qmax, real_msr_mean, color=:blue, label="ARTR HMM", linewidth=5, linestyle=:dash)
+	#Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:red, label="ARTR HMM (shuffled)", linewidth=5, linestyle=:dash)
+
+	# δθ_dat = [[obs.θ for obs = traj] for traj = ZebrafishHMM2023.load_full_obs(temperature)]
+	# (; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_dat; qmax)
+	# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:gray, 0.5))
+	# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:red, 0.5))
+	# Makie.lines!(ax, 0:qmax, real_msr_mean, color=:black, label="Data")
+	# Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:red, label="Data shuffled")
+	
+	Makie.xlims!(ax, 0, qmax)
+	Makie.ylims!(ax, 0, 4e4)
+
+	Makie.axislegend(ax; position=:lt, framevisible=false)
+
+	ax = Makie.Axis(fig[1,2], width=300, height=300)
+	Makie.barplot!(1:1, [mean(MSR_real_fish)]; color=:lightgray, strokecolor=:black, strokewidth=5)
+	Makie.barplot!(2:2, [mean(MSR_hmm_fish)]; color=:lightblue, strokecolor=:blue)
+	Makie.barplot!(3:3, [mean(MSR_hmm_shuffled_fish)]; color=:pink, strokecolor=:red)
+
+	Makie.errorbars!(1:1, [mean(MSR_real_fish) - std(MSR_real_fish)/2], [mean(MSR_real_fish) + std(MSR_real_fish)/2]; color=:black)
+	Makie.errorbars!(2:2, [mean(MSR_hmm_fish) - std(MSR_hmm_fish)/2], [mean(MSR_hmm_fish) + std(MSR_hmm_fish)/2]; color=:blue)
+	Makie.errorbars!(3:3, [mean(MSR_hmm_shuffled_fish) - std(MSR_hmm_shuffled_fish)/2], [mean(MSR_hmm_shuffled_fish) + std(MSR_hmm_shuffled_fish)/2]; color=:red)
+	
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ 5d3b3335-d787-44b9-a308-b5f73e6cc75c
+# ╠═╡ disabled = true
+# ╠═╡ skip_as_script = true
+#=╠═╡
+let fig = Makie.Figure()
+	qmax = 30
+	temperature = 18 # temperature of the long trajectory
+				
+	ax = Makie.Axis(fig[1,1], width=300, height=300, xlabel="q", ylabel="MSR(q)", xgridvisible=false, ygridvisible=false)
+
+	for (n, fish) = enumerate(trajs_long)
+		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(fish; qmax)
+		# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+		# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+		if n == 1
+			Makie.lines!(ax, 0:qmax, real_msr_mean, color=(:gray, 0.7), linewidth=1, label="data")
+		else
+			Makie.lines!(ax, 0:qmax, real_msr_mean, color=(:gray, 0.7), linewidth=1)
+		end
+		#Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:lightpink)
+	end
+
+	for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
+		δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for rep = 1:100]
+	
+		(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_hmm; qmax)
+		# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+		# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+		Makie.lines!(ax, 0:qmax, real_msr_mean, color=(:blue, 0.9), linewidth=1)
+		Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=(:red, 0.9), linewidth=1)
+	end
+	
+	δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature) for rep = 1:100]
+
+	(; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_hmm; qmax)
+	# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:blue, 0.5))
+	# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:blue, 0.5))
+	# Makie.lines!(ax, 0:qmax, real_msr_mean, color=:blue, label="ARTR HMM", linewidth=5)
+	# Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:red, label="ARTR HMM (shuffled)", linewidth=5)
+
+	# δθ_dat = [[obs.θ for obs = traj] for traj = ZebrafishHMM2023.load_full_obs(temperature)]
+	# (; real_msr_mean, real_msr_std, shuffled_msr_mean, shuffled_msr_std) = MSR_analyses(δθ_dat; qmax)
+	# Makie.band!(ax, 0:qmax, real_msr_mean - real_msr_std, real_msr_mean + real_msr_std; color=(:gray, 0.5))
+	# Makie.band!(ax, 0:qmax, shuffled_msr_mean - shuffled_msr_std, shuffled_msr_mean + shuffled_msr_std, color=(:red, 0.5))
+	# Makie.lines!(ax, 0:qmax, real_msr_mean, color=:black, label="Data")
+	# Makie.lines!(ax, 0:qmax, shuffled_msr_mean, color=:red, label="Data shuffled")
+	
+	Makie.xlims!(ax, 0, qmax)
+	Makie.ylims!(ax, 0, 4e4)
+
+	Makie.axislegend(ax, position=:lt)
+	Makie.resize_to_layout!(fig)
+	fig
+end
+  ╠═╡ =#
+
+# ╔═╡ d40d0d61-46dc-4f0b-ab43-d6d7d4ddb318
+[obs.θ for traj = ZebrafishHMM2023.load_full_obs(18) for obs = traj]
+
+# ╔═╡ 7b96c684-d1cf-4702-816e-2bf7cb1561bb
+mean(map(length, ZebrafishHMM2023.load_full_obs(18)))
+
+# ╔═╡ 0ab3e8bb-ef4d-4937-8e84-77f6acb2acd0
+map(length, ZebrafishHMM2023.load_full_obs(18))
+
+# ╔═╡ 7456ec34-1b23-4f4d-b4bb-3d9d41864a67
+
+
+# ╔═╡ 9546fbf5-719e-4631-bdb4-290990850ff6
+
 
 # ╔═╡ Cell order:
 # ╠═5b3604a6-3dcc-11ef-1ff1-a71b51c7d8e9
@@ -417,6 +630,7 @@ end
 # ╠═c797f3ce-6d16-47e1-8728-82399f2133a9
 # ╠═7d355591-dddd-4463-97b1-d53e223bd6b3
 # ╠═2b6c2c33-1168-49b1-82a3-10f9f6478188
+# ╠═fbb0e774-cf43-4cea-8057-81c36c8d3d04
 # ╠═8398c332-235b-4f6c-ab1e-8b5fd62d2d5a
 # ╠═0aae9cb6-85c1-4792-8c81-2d772b2f3b19
 # ╠═9be8b699-c392-45b2-a80c-e5893b1ecc53
@@ -434,6 +648,7 @@ end
 # ╠═0601dac5-cef9-4b2b-83ce-d37064e4d9e1
 # ╠═cbf99327-4e73-43d8-aa64-05555b8ebe99
 # ╠═a72cad49-5d10-453b-81c3-af9bb4b0fab7
+# ╠═f3750f97-ac22-491e-99f1-d9fc1a99e423
 # ╠═369d6c55-4239-4eeb-b23b-4c3910d791fd
 # ╠═edd47451-04d6-4fe1-ab6c-61ca175e9e4f
 # ╠═51d4b383-4afc-4827-a253-5fbcb8b56e16
@@ -455,3 +670,14 @@ end
 # ╠═e7babee3-87f5-4cff-a60c-5006f8c92cd9
 # ╠═f6963397-4e09-4cfc-8d33-64a5a37cad96
 # ╠═eb54ac49-2607-4590-bbc1-84cc7cca9d52
+# ╠═159900f7-1b9f-4b0f-8b89-c7db803137a3
+# ╠═63c2663b-4cf6-4b90-96d1-ad7f840b02ff
+# ╠═550b1a3a-ba25-48f7-aec4-509704ffe21c
+# ╠═ffdb4a8d-6a75-441f-b6a5-c6c3321d37b7
+# ╠═7d179bcd-5dd6-40e3-b96a-5b4d0e7a30a7
+# ╠═5d3b3335-d787-44b9-a308-b5f73e6cc75c
+# ╠═d40d0d61-46dc-4f0b-ab43-d6d7d4ddb318
+# ╠═7b96c684-d1cf-4702-816e-2bf7cb1561bb
+# ╠═0ab3e8bb-ef4d-4937-8e84-77f6acb2acd0
+# ╠═7456ec34-1b23-4f4d-b4bb-3d9d41864a67
+# ╠═9546fbf5-719e-4631-bdb4-290990850ff6
