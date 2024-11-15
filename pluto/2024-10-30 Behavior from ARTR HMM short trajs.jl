@@ -25,6 +25,9 @@ using Distributions: Gamma
 # ╔═╡ 1f13bab2-89ac-4371-8a4d-021e03a909db
 using Distributions: Exponential
 
+# ╔═╡ 8d468b7c-01b3-4dbd-8754-bcd35ee7ef81
+using DelimitedFiles: writedlm
+
 # ╔═╡ 33f41862-1247-44e1-9179-869d207db0fa
 using Random: shuffle
 
@@ -713,6 +716,30 @@ let fig = Makie.Figure()
 	fig
 end
 
+# ╔═╡ b88952d7-9194-45a1-964a-4609797aa88c
+md"# Save MSR for Matteo"
+
+# ╔═╡ b65c8cd2-c4a7-4ec9-8465-44bd8c5f7b0d
+_temp_dir_msr_for_matteo = mktempdir()
+
+# ╔═╡ 205970d5-6f7e-49a7-8ab2-6fc0932c4b8c
+let qmax = 15
+	selected_temperatures = ZebrafishHMM2023.artr_wolf_2023_temperatures()
+	for (col, temperature) = enumerate(selected_temperatures)
+		for fish = ZebrafishHMM2023.artr_wolf_2023_fishes(temperature)
+			δθ_hmm = [CSV.read(joinpath(_tmpdir, "temperature=$temperature-fish=$fish-rep=$rep.csv"), DataFrame).bout_angle for rep = 1:100]
+
+			# normalize
+			μ = mean(θ for traj = δθ_hmm for θ = traj)
+			δθ_hmm = [[θ - μ for θ = traj] for traj = δθ_hmm]
+			
+			msr = [mean_MSR(δθ_hmm, q) for q = 0:qmax]
+						
+			writedlm(joinpath(_temp_dir_msr_for_matteo, "msr-N-HMM-gen-temperature=$temperature-fish=$fish.txt"), [0:qmax msr])
+		end
+	end
+end
+
 # ╔═╡ Cell order:
 # ╠═628177f1-0336-4b1b-9b33-0ef8381b7db4
 # ╠═c7a4ca53-587c-4984-b712-b125e57a0aa8
@@ -729,6 +756,7 @@ end
 # ╠═c1ab6ce0-a442-4006-b24e-738d1e78a3b3
 # ╠═5f323e93-8bc6-4f08-b2b8-f4b53060dfc6
 # ╠═1f13bab2-89ac-4371-8a4d-021e03a909db
+# ╠═8d468b7c-01b3-4dbd-8754-bcd35ee7ef81
 # ╠═33f41862-1247-44e1-9179-869d207db0fa
 # ╠═95d062ff-5a77-45b9-99ce-a01ee3fe36cb
 # ╠═3e230ebc-73a3-4f50-bc78-59fa3b8552b5
@@ -749,3 +777,6 @@ end
 # ╠═4b8eb55f-9091-4b9f-9537-583ab20cfee8
 # ╠═ee07aae7-bc94-40e7-bfbc-9ee6bd8823fa
 # ╠═ceb10287-1340-4834-b4c9-11d37f1eec01
+# ╠═b88952d7-9194-45a1-964a-4609797aa88c
+# ╠═b65c8cd2-c4a7-4ec9-8465-44bd8c5f7b0d
+# ╠═205970d5-6f7e-49a7-8ab2-6fc0932c4b8c
