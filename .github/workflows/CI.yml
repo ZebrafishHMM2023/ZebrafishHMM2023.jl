@@ -17,7 +17,6 @@ jobs:
         arch:
           - x64
     env:
-      GH_TOKEN: ${{ secrets.KAKI_PAT }}
       JULIA_PKG_USE_CLI_GIT: true
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
