@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.0
+# v0.20.5
 
 using Markdown
 using InteractiveUtils
@@ -154,42 +154,44 @@ _temp_fig_dir = mktempdir()
 let fig = Makie.Figure()
 	_opts = (; width=150, height=150, xlabel="global HMM", ylabel="<chunk HMMs>")
 
+	_null_color=:gray
+
 	ax = Makie.Axis(fig[1,1]; _opts..., title="std(forw)")
 	Makie.errorbars!(ax, [hmm.σforw for hmm = global_hmms],
 	    [mean(hmm.σforw for hmm = fish) for fish = chunk_hmms_null],
-	    [std(hmm.σforw for hmm = fish) for fish = chunk_hmms_null]/2; color=:red
+	    [std(hmm.σforw for hmm = fish) for fish = chunk_hmms_null]/2; color=_null_color
 	)
 	Makie.errorbars!(ax, [hmm.σforw for hmm = global_hmms],
 	    [mean(hmm.σforw for hmm = fish) for fish = chunk_hmms],
 	    [std(hmm.σforw for hmm = fish) for fish = chunk_hmms] / 2; color=:blue
 	)
-	scatter_null = Makie.scatter!(ax, [hmm.σforw for hmm = global_hmms], [mean(hmm.σforw for hmm = fish) for fish = chunk_hmms_null]; label="null", color=:red)
+	scatter_null = Makie.scatter!(ax, [hmm.σforw for hmm = global_hmms], [mean(hmm.σforw for hmm = fish) for fish = chunk_hmms_null]; label="null", color=_null_color)
 	scatter_real = Makie.scatter!(ax, [hmm.σforw for hmm = global_hmms], [mean(hmm.σforw for hmm = fish) for fish = chunk_hmms]; label="real", color=:blue)
 	Makie.ylims!(ax, 1, 7)
 	
 	ax = Makie.Axis(fig[1,2]; _opts..., title="mean(turn)")
 	Makie.errorbars!(ax, [mean(hmm.turn) for hmm = global_hmms], 
 	    [mean(mean(hmm.turn) for hmm = fish) for fish = chunk_hmms_null],
-	    [std(mean(hmm.turn) for hmm = fish) for fish = chunk_hmms_null] / 2; color=:red
+	    [std(mean(hmm.turn) for hmm = fish) for fish = chunk_hmms_null] / 2; color=_null_color
 	)
 	Makie.errorbars!(ax, [mean(hmm.turn) for hmm = global_hmms], 
 	    [mean(mean(hmm.turn) for hmm = fish) for fish = chunk_hmms],
 	    [std(mean(hmm.turn) for hmm = fish) for fish = chunk_hmms] / 2; color=:blue
 	)
-	Makie.scatter!(ax, [mean(hmm.turn) for hmm = global_hmms], [mean(mean(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=:red)
+	Makie.scatter!(ax, [mean(hmm.turn) for hmm = global_hmms], [mean(mean(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=_null_color)
 	Makie.scatter!(ax, [mean(hmm.turn) for hmm = global_hmms], [mean(mean(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms]; color=:blue)
 	Makie.ylims!(ax, 20, 45)
 	
 	ax = Makie.Axis(fig[1,3]; _opts..., title="std(turn)")
 	Makie.errorbars!(ax, [std(hmm.turn) for hmm = global_hmms], 
 	    [mean(std(hmm.turn) for hmm = fish) for fish = chunk_hmms_null],
-	    [std(std(hmm.turn) for hmm = fish) for fish = chunk_hmms_null] / 2; color=:red
+	    [std(std(hmm.turn) for hmm = fish) for fish = chunk_hmms_null] / 2; color=_null_color
 	)
 	Makie.errorbars!(ax, [std(hmm.turn) for hmm = global_hmms], 
 	    [mean(std(hmm.turn) for hmm = fish) for fish = chunk_hmms],
 	    [std(std(hmm.turn) for hmm = fish) for fish = chunk_hmms] / 2; color=:blue
 	)
-	Makie.scatter!(ax, [std(hmm.turn) for hmm = global_hmms], [mean(std(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=:red)
+	Makie.scatter!(ax, [std(hmm.turn) for hmm = global_hmms], [mean(std(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=_null_color)
 	Makie.scatter!(ax, [std(hmm.turn) for hmm = global_hmms], [mean(std(hmm.turn) for hmm = chunk_hmm) for chunk_hmm = chunk_hmms]; color=:blue)
 	Makie.ylims!(ax, 13, 28)
 
@@ -199,62 +201,64 @@ let fig = Makie.Figure()
 	ax = Makie.Axis(fig[2,1]; _opts..., title="F->F")
 	Makie.errorbars!(ax, [hmm.transition_matrix[1,1] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[1,1] for hmm = fish) for fish = chunk_hmms_null],
-	    [std(hmm.transition_matrix[1,1] for hmm = fish) for fish = chunk_hmms_null] / 2; color=:red
+	    [std(hmm.transition_matrix[1,1] for hmm = fish) for fish = chunk_hmms_null] / 2; color=_null_color
 	)
 	Makie.errorbars!(ax, [hmm.transition_matrix[1,1] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[1,1] for hmm = fish) for fish = chunk_hmms],
 	    [std(hmm.transition_matrix[1,1] for hmm = fish) for fish = chunk_hmms] / 2; color=:blue
 	)
-	Makie.scatter!(ax, [hmm.transition_matrix[1,1] for hmm = global_hmms], [mean(hmm.transition_matrix[1,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=:red)
+	Makie.scatter!(ax, [hmm.transition_matrix[1,1] for hmm = global_hmms], [mean(hmm.transition_matrix[1,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=_null_color)
 	Makie.scatter!(ax, [hmm.transition_matrix[1,1] for hmm = global_hmms], [mean(hmm.transition_matrix[1,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms]; color=:blue)
 	Makie.ylims!(ax, 0, 0.7)
 	
 	ax = Makie.Axis(fig[2,2]; _opts..., title="F->L, F->R")
 	Makie.errorbars!(ax, [hmm.transition_matrix[1,2] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[1,2] for hmm = fish) for fish = chunk_hmms_null],
-	    [std(hmm.transition_matrix[1,2] for hmm = fish) for fish = chunk_hmms_null] / 2; color=:red
+	    [std(hmm.transition_matrix[1,2] for hmm = fish) for fish = chunk_hmms_null] / 2; color=_null_color
 	)
 	Makie.errorbars!(ax, [hmm.transition_matrix[1,2] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[1,2] for hmm = fish) for fish = chunk_hmms],
 	    [std(hmm.transition_matrix[1,2] for hmm = fish) for fish = chunk_hmms] / 2; color=:blue
 	)
-	Makie.scatter!(ax, [hmm.transition_matrix[1,2] for hmm = global_hmms], [mean(hmm.transition_matrix[1,2] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=:red)
+	Makie.scatter!(ax, [hmm.transition_matrix[1,2] for hmm = global_hmms], [mean(hmm.transition_matrix[1,2] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=_null_color)
 	Makie.scatter!(ax, [hmm.transition_matrix[1,2] for hmm = global_hmms], [mean(hmm.transition_matrix[1,2] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms]; color=:blue)
 	Makie.ylims!(ax, 0.2, 0.5)
 	
 	ax = Makie.Axis(fig[2,3]; _opts..., title="L->L, R->R")
 	Makie.errorbars!(ax, [hmm.transition_matrix[3,3] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null],
-	    [std(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null] / 2; color=:red
+	    [std(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null] / 2; color=_null_color
 	)
 	Makie.errorbars!(ax, [hmm.transition_matrix[3,3] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms],
 	    [std(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms] / 2; color=:blue
 	)
-	Makie.scatter!(ax, [hmm.transition_matrix[3,3] for hmm = global_hmms], [mean(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=:red)
+	Makie.scatter!(ax, [hmm.transition_matrix[3,3] for hmm = global_hmms], [mean(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=_null_color)
 	Makie.scatter!(ax, [hmm.transition_matrix[3,3] for hmm = global_hmms], [mean(hmm.transition_matrix[3,3] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms]; color=:blue)
 	Makie.ylims!(ax, 0.1, 0.6)
 	
 	ax = Makie.Axis(fig[2,4]; _opts..., title="L->F, R->F")
 	Makie.errorbars!(ax, [hmm.transition_matrix[3,1] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null],
-	    [std(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null] / 2; color=:red
+	    [std(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null] / 2; color=_null_color
 	)
 	Makie.errorbars!(ax, [hmm.transition_matrix[3,1] for hmm = global_hmms], 
 	    [mean(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms],
 	    [std(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms] / 2; color=:blue
 	)
-	Makie.scatter!(ax, [hmm.transition_matrix[3,1] for hmm = global_hmms], [mean(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=:red)
+	Makie.scatter!(ax, [hmm.transition_matrix[3,1] for hmm = global_hmms], [mean(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms_null]; color=_null_color)
 	Makie.scatter!(ax, [hmm.transition_matrix[3,1] for hmm = global_hmms], [mean(hmm.transition_matrix[3,1] for hmm = chunk_hmm) for chunk_hmm = chunk_hmms]; color=:blue)
 	Makie.ylims!(ax, 0.2, 0.7)
 	
 	Makie.resize_to_layout!(fig)
-	Makie.save(joinpath(_temp_fig_dir, "Sup5_new.pdf"), fig)
+	fig_path = joinpath(_temp_fig_dir, "Sup5_new.pdf")
+	Makie.save(fig_path, fig)
+	@show fig_path
 	fig
 end
 
 # ╔═╡ 0acd20a5-3015-4fa9-8f90-8ae2f09c5f32
-joinpath(_temp_fig_dir, "Sup5_new.pdf")
+
 
 # ╔═╡ 271fbcca-b96b-467c-815f-074ae031b76b
 let fig = Makie.Figure()
