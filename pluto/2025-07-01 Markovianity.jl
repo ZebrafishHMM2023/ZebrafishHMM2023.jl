@@ -157,6 +157,97 @@ let fig = Makie.Figure()
 	fig
 end
 
+# ╔═╡ 5dd84cdf-410a-4ff2-b01e-5eb2be4bc97c
+let fig = Makie.Figure()
+	for (i,T) = enumerate(ZebrafishHMM2023.behaviour_free_swimming_temperatures())
+		triples = word_counts(load_thresholded_mc_states(T), 3)
+		doubles = word_counts(load_thresholded_mc_states(T), 2)
+		singles = word_counts(load_thresholded_mc_states(T), 1)
+
+		simulated_triples = simulate_markovian_triples(doubles, triples)
+
+		triples_normalized = Dict(k => v / sum(values(triples)) for (k,v) = triples)
+		doubles_normalized = Dict(k => v / sum(values(doubles)) for (k,v) = doubles)
+		singles_normalized = Dict(k => v / sum(values(singles)) for (k,v) = singles)
+
+		simulated_triples_normalized = Dict(k => v / sum(values(simulated_triples)) for (k,v) = simulated_triples)
+
+		ax = Makie.Axis(fig[1,i]; width=250, height=250, title="T=$T", xlabel=L"(P(x_{t}|x_{t-1},x_{t-2}) - P(x_{t}|x_{t-1})) / P(x_{t}|x_{t-1})", ylabel="Frequency")
+		Makie.hist!(ax, 
+					[(triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)]) / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) - 1 for x1 = -1:1 for x2=-1:1 for x3=-1:1]; 
+					normalization=:pdf, bins=-0.5:0.05:0.5, label="data"
+					)
+		Makie.hist!(ax,
+					[(simulated_triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)]) / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) - 1 for x1 = -1:1 for x2=-1:1 for x3=-1:1]; 
+					normalization=:pdf, bins=-0.5:0.05:0.5, label="null model")
+
+		Makie.axislegend(ax, position=:rt)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ cb92016e-c378-4038-976a-ec50243af26d
+md"# Markovianity with HMM labeled states (Viterbi)"
+
+# ╔═╡ 8ea43eca-c3bf-4d54-a68a-3c6aff386ff7
+function train_bouts_hmm_sym(T::Int)
+	@info "Training models for T = $T"
+
+    trajs = ZebrafishHMM2023.load_behaviour_free_swimming_trajs(T)
+
+    trajs = filter(traj -> all(!iszero, traj), trajs) # zeros give trouble sometimes
+    hmm = ZebrafishHMM2023.normalize_all!(ZebrafishHMM2023.ZebrafishHMM_G3_Sym(rand(), rand(3,3), 1.0, Gamma(1.5, 20.0), 1.0))
+    (hmm, lL) = HiddenMarkovModels.baum_welch(hmm, trajs, length(trajs); max_iterations = 500, check_loglikelihood_increasing = false, atol = ZebrafishHMM2023.ATol(1e-6))
+
+    return hmm
+end
+
+# ╔═╡ b3edcf47-8dd6-47f7-b54c-ac002bf913b7
+trajs_free = Dict(T => ZebrafishHMM2023.load_behaviour_free_swimming_trajs(T) for T = ZebrafishHMM2023.behaviour_free_swimming_temperatures());
+
+# ╔═╡ 543f98c0-778f-4625-80b9-c69451c886cc
+bouts_hmms = Dict(temperature => train_bouts_hmm_sym(temperature) for temperature = ZebrafishHMM2023.behaviour_free_swimming_temperatures());
+
+# ╔═╡ 3c9f00be-5c24-4908-90d3-c174334b4258
+viterbi_labeled_trajs = Dict(T => HiddenMarkovModels.viterbi(bouts_hmms[T], trajs_free[T], length(trajs_free[T])) for T = ZebrafishHMM2023.behaviour_free_swimming_temperatures());
+
+# ╔═╡ 31aae8bd-a16b-4ad6-a612-3f79eca56dd3
+let fig = Makie.Figure()
+	for (i, T) = enumerate(ZebrafishHMM2023.behaviour_free_swimming_temperatures())
+		labeled_seqs = [t .- 2 for t = viterbi_labeled_trajs[T]]
+		
+		triples = word_counts(labeled_seqs, 3)
+		doubles = word_counts(labeled_seqs, 2)
+		singles = word_counts(labeled_seqs, 1)
+
+		simulated_triples = simulate_markovian_triples(doubles, triples)
+
+		triples_normalized = Dict(k => v / sum(values(triples)) for (k,v) = triples)
+		doubles_normalized = Dict(k => v / sum(values(doubles)) for (k,v) = doubles)
+		singles_normalized = Dict(k => v / sum(values(singles)) for (k,v) = singles)
+
+		simulated_triples_normalized = Dict(k => v / sum(values(simulated_triples)) for (k,v) = simulated_triples)
+
+		ax = Makie.Axis(fig[1,i]; width=250, height=250, title="T=$T", xlabel=L"(P(x_{t}|x_{t-1},x_{t-2}) - P(x_{t}|x_{t-1})) / P(x_{t}|x_{t-1})", ylabel="Frequency")
+		Makie.hist!(ax, 
+			[(triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)]) / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) - 1 for x1 = -1:1 for x2=-1:1 for x3=-1:1]; 
+			normalization=:pdf, bins=-0.5:0.05:0.5, label="HMM labels"
+		)
+		Makie.hist!(ax,
+			[(simulated_triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)]) / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) - 1 for x1 = -1:1 for x2=-1:1 for x3=-1:1]; 
+			normalization=:pdf, bins=-0.5:0.05:0.5, label="null model"
+		)
+
+		Makie.axislegend(ax, position=:rt)
+	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ c2f11ebb-5aee-4341-84f9-75eb838d4620
+viterbi(hmm, trajs, length(trajs))
+
 # ╔═╡ Cell order:
 # ╠═8c4edcda-6200-4982-9286-e51b13fe0ba0
 # ╠═34bee668-5efa-472b-9093-e082daf4a796
@@ -178,3 +269,11 @@ end
 # ╠═82c1aa23-6ba5-4e87-849f-a2d7279ab25d
 # ╠═e59cf68f-0009-41b9-b54a-bfb6ceda2a86
 # ╠═b23e920b-6cfb-49a8-bef3-af9dfcd378d8
+# ╠═5dd84cdf-410a-4ff2-b01e-5eb2be4bc97c
+# ╠═cb92016e-c378-4038-976a-ec50243af26d
+# ╠═8ea43eca-c3bf-4d54-a68a-3c6aff386ff7
+# ╠═b3edcf47-8dd6-47f7-b54c-ac002bf913b7
+# ╠═543f98c0-778f-4625-80b9-c69451c886cc
+# ╠═3c9f00be-5c24-4908-90d3-c174334b4258
+# ╠═31aae8bd-a16b-4ad6-a612-3f79eca56dd3
+# ╠═c2f11ebb-5aee-4341-84f9-75eb838d4620
