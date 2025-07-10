@@ -8,10 +8,10 @@ using InteractiveUtils
 import Pkg, Revise; Pkg.activate(Base.current_project())
 
 # ╔═╡ 353a003c-acc2-4632-b8c5-3765ace40490
-using Statistics: mean
+using Statistics: mean, std
 
 # ╔═╡ 6d701605-96b1-4dfe-a806-4841fd1c6b48
-using Distributions: Gamma, Exponential, Multinomial
+using Distributions: Gamma, Exponential, Multinomial, Categorical
 
 # ╔═╡ 3eaf5a73-3865-4cfb-b72f-b5829ae5c1e5
 using StatsBase: countmap, proportionmap, countmap
@@ -96,6 +96,14 @@ function simulate_markovian_triples(doubles, triples)
 	return sim_triples
 end
 
+# ╔═╡ 273e9a9d-2e14-4267-b0c2-ed1697b21115
+function simulate_markov(doubles, len)
+	x0 = rand(-1:1)
+	for t = 1:len
+		
+	end
+end
+
 # ╔═╡ f26d1864-cf3e-4a96-97e7-2abe383395ca
 md"# Markovianity"
 
@@ -147,9 +155,9 @@ let fig = Makie.Figure()
 
 		ax = Makie.Axis(fig[1,i]; width=250, height=250, title="T=$T", xlabel=L"\log_{10} P(x_{t}|x_{t-1},x_{t-2}) / P(x_{t}|x_{t-1})", ylabel="Frequency")
 		Makie.hist!(ax, log10.([triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)] / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) for x1 = -1:1 for x2=-1:1 for x3=-1:1]); 
-					normalization=:pdf, bins=-0.2:0.02:0.2, label="data")
+					normalization=:pdf, bins=-0.25:0.025:0.25, label="data")
 		Makie.hist!(ax, log10.([simulated_triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)] / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) for x1 = -1:1 for x2=-1:1 for x3=-1:1]); 
-					normalization=:pdf, bins=-0.2:0.02:0.2, label="null model")
+					normalization=:pdf, bins=-0.25:0.025:0.25, label="null model")
 
 		Makie.axislegend(ax, position=:rt)
 	end
@@ -164,7 +172,7 @@ let fig = Makie.Figure()
 		doubles = word_counts(load_thresholded_mc_states(T), 2)
 		singles = word_counts(load_thresholded_mc_states(T), 1)
 
-		simulated_triples = simulate_markovian_triples(doubles, triples)
+		simulated_triples = simulate_markovian_triples(doubles, triples) # null model
 
 		triples_normalized = Dict(k => v / sum(values(triples)) for (k,v) = triples)
 		doubles_normalized = Dict(k => v / sum(values(doubles)) for (k,v) = doubles)
@@ -172,17 +180,80 @@ let fig = Makie.Figure()
 
 		simulated_triples_normalized = Dict(k => v / sum(values(simulated_triples)) for (k,v) = simulated_triples)
 
-		ax = Makie.Axis(fig[1,i]; width=250, height=250, title="T=$T", xlabel=L"(P(x_{t}|x_{t-1},x_{t-2}) - P(x_{t}|x_{t-1})) / P(x_{t}|x_{t-1})", ylabel="Frequency")
+		bins = -0.5:0.1:0.5
+		
+		ax = Makie.Axis(fig[1,i]; width=200, height=200, title="T=$T", xlabel=L"(P(x_{t}|x_{t-1},x_{t-2}) - P(x_{t}|x_{t-1})) / P(x_{t}|x_{t-1})", ylabel="Frequency")
 		Makie.hist!(ax, 
 					[(triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)]) / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) - 1 for x1 = -1:1 for x2=-1:1 for x3=-1:1]; 
-					normalization=:pdf, bins=-0.5:0.05:0.5, label="data"
-					)
+					normalization=:pdf, bins, label="data")
 		Makie.hist!(ax,
 					[(simulated_triples_normalized[(x1,x2,x3)] / doubles_normalized[(x1,x2)]) / (doubles_normalized[(x2,x3)] / singles_normalized[(x2,)]) - 1 for x1 = -1:1 for x2=-1:1 for x3=-1:1]; 
-					normalization=:pdf, bins=-0.5:0.05:0.5, label="null model")
-
-		Makie.axislegend(ax, position=:rt)
+					normalization=:pdf, bins, label="null model")
+		#Makie.axislegend(ax, position=:rt)
 	end
+	Makie.resize_to_layout!(fig)
+	fig
+end
+
+# ╔═╡ bb431fdd-c14f-4090-92cb-32115e728c36
+function simulate_markov(x1::Int, T::Int, p_trans::Dict)
+	traj = zeros(Int, T)
+	traj[1] = x1
+	for t = 2:T
+		p = [p_trans[(traj[t-1],x_next)] for x_next=-1:1]
+		traj[t] = rand(Categorical(p / sum(p))) - 2
+	end
+	return traj
+end
+
+# ╔═╡ d49c22ad-c9df-4f17-b622-da81cbc173b2
+function log_p_traj_double(traj, p_double::Dict, p_single::Dict)
+	log_p = p_single[traj[1]]
+	for t = 2:length(traj)
+		log_p += p_double[(traj[t-1],traj[t])]
+	end
+	return log_p
+end
+
+# ╔═╡ 54932f14-db94-4a59-98ab-8f4f467c5c09
+function log_p_traj_triple(traj, p_triple::Dict, p_double::Dict)
+	log_p = p_double[(traj[1], traj[2])]
+	for t = 3:length(traj)
+		log_p += p_triple[(traj[t-2],traj[t-1],traj[t])]
+	end
+	return log_p
+end
+
+# ╔═╡ 4acaf6b2-f38e-423e-a6ac-ff338a14d526
+let fig = Makie.Figure()
+	log_p_sim = Float64[]
+	log_p_data = Float64[]
+	for (i,T) = enumerate(ZebrafishHMM2023.behaviour_free_swimming_temperatures())
+		data_labeled = load_thresholded_mc_states(T)
+		
+		triples = word_counts(data_labeled, 3) # N(x1,x2,x3)
+		doubles = word_counts(data_labeled, 2) # N(x1,x2)
+		singles = word_counts(data_labeled, 1) # N(x1)
+
+		triples_normalized = Dict(k => v / sum(values(triples)) for (k,v) = triples) # p(x1,x2,3)
+		doubles_normalized = Dict(k => v / sum(values(doubles)) for (k,v) = doubles) # p(x1,x2)
+		singles_normalized = Dict(k => v / sum(values(singles)) for (k,v) = singles) # p(x1)
+
+		p_cond_null = Dict((x1,x2) => doubles_normalized[(x1,x2)] / singles_normalized[(x1,)] for x1 = -1:1 for x2=-1:1) # p(x2|x1) under Markovian model
+		p_triple_null = Dict((x1,x2,x3) => doubles_normalized[(x1,x2)] * p_cond_null[(x2,x3)] for x1 = -1:1 for x2=-1:1 for x3=-1:1) # # p_null(x1,x2,x3) = p(x1,x2) * p(x3|x2), under Markovian model
+
+		#simulated_null = [[log_p_traj_double(simulate_markov(first(traj), length(traj), p_cond_null), doubles_normalized, singles_normalized) for traj = data_labeled] for _ = 1:100]
+		simulated_p = [mean(log_p_traj_triple(simulate_markov(first(traj), length(traj), p_cond_null), triples_normalized, doubles_normalized) for _ = 1:100) for traj = data_labeled]
+		data_p = [log_p_traj_triple(traj, triples_normalized, doubles_normalized) for traj = data_labeled]
+
+		push!(log_p_sim, mean(simulated_p))
+		push!(log_p_data, mean(data_p))
+	end
+	ax = Makie.Axis(fig[1,1]; width=300, height=200, xlabel="Temperature", ylabel="ΔLL")
+	#Makie.scatterlines!(ax, collect(ZebrafishHMM2023.behaviour_free_swimming_temperatures()), log_p_null_triples_data - log_p_null_triples_sim)
+
+	y = (log_p_data - log_p_sim) ./ log_p_data
+	Makie.scatterlines!(ax, collect(ZebrafishHMM2023.behaviour_free_swimming_temperatures()), y)
 	Makie.resize_to_layout!(fig)
 	fig
 end
@@ -265,11 +336,16 @@ viterbi(hmm, trajs, length(trajs))
 # ╠═c447cc13-94ad-4611-afab-0b0e14c38635
 # ╠═f9b074f0-75e9-47f1-b1ef-fa4d6173eb6a
 # ╠═6dc99bf3-ed4b-443f-b19d-c4f4c3d71c8f
+# ╠═273e9a9d-2e14-4267-b0c2-ed1697b21115
 # ╠═f26d1864-cf3e-4a96-97e7-2abe383395ca
 # ╠═82c1aa23-6ba5-4e87-849f-a2d7279ab25d
 # ╠═e59cf68f-0009-41b9-b54a-bfb6ceda2a86
 # ╠═b23e920b-6cfb-49a8-bef3-af9dfcd378d8
 # ╠═5dd84cdf-410a-4ff2-b01e-5eb2be4bc97c
+# ╠═4acaf6b2-f38e-423e-a6ac-ff338a14d526
+# ╠═bb431fdd-c14f-4090-92cb-32115e728c36
+# ╠═d49c22ad-c9df-4f17-b622-da81cbc173b2
+# ╠═54932f14-db94-4a59-98ab-8f4f467c5c09
 # ╠═cb92016e-c378-4038-976a-ec50243af26d
 # ╠═8ea43eca-c3bf-4d54-a68a-3c6aff386ff7
 # ╠═b3edcf47-8dd6-47f7-b54c-ac002bf913b7
